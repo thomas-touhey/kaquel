@@ -1,0 +1,70 @@
+stages:
+  - lint
+  - build
+  - test
+  - publish
+
+pre-commit:
+    stage: lint
+    image: python:3.11
+    before_script:
+        - pip install poetry==1.8.1
+        - poetry install
+    script:
+        - poetry run pre-commit run -v --all-files
+
+build docs:
+    stage: build
+    image: python:3.11
+    before_script:
+        - pip install poetry==1.8.1
+        - poetry install
+    script:
+        - poetry run sphinx-build -M html docs docs/_build
+    artifacts:
+        paths:
+            - docs/_build/html
+
+run tests:
+    stage: test
+    image: python:3.11
+    rules:
+        - if: $CI_COMMIT_BRANCH == "develop"
+          when: always
+    before_script:
+        - pip install poetry==1.8.1
+        - poetry install
+    script:
+        - poetry run pytest -v --cov-report=xml:coverage.xml
+    coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+
+publish docs:
+    stage: publish
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: always
+    image: debian:bookworm-slim
+    before_script:
+        - apt-get update -y
+        - apt-get install -y rsync openssh-client
+        - eval $(ssh-agent -s)
+        - mkdir ~/.ssh && chmod 700 ~/.ssh
+        - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" >~/.ssh/config
+        - chmod 400 "$SSH_PRIVATE_KEY"
+        - ssh-add "$SSH_PRIVATE_KEY"
+    script:
+        - rsync -Prlt --delete docs/_build/html/ gitlab-kaquel@kaquel.touhey.pro:kaquel
+    dependencies:
+        - build docs
+
+publish package:
+    stage: publish
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: always
+    image: python:3.11
+    before_script:
+        - pip install poetry==1.8.1
+        - poetry install
+    script:
+        - poetry publish --build

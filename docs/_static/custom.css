@@ -1,0 +1,32 @@
+h1 img, h2 img, p img {
+    vertical-align: baseline;
+    width: .8em;
+}
+
+.sidebar-logo {
+    width: 80%;
+}
+
+.mermaid {
+    text-align: center;
+}
+
+#kaquel-version .toctree-wrapper > ul {
+    display: flex;
+    list-style-type: none;
+    flex-wrap: wrap;
+    padding-left: 0;
+    gap: .5em 1em;
+}
+
+#kaquel-version .toctree-wrapper > ul > li {
+    display: inline-block;
+    flex: 1 0 20em;
+}
+
+.bottom-of-page .icons svg,
+.bottom-of-page .icons img {
+    width: auto;
+    height: 2em;
+    vertical-align: middle;
+}
