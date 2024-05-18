@@ -32,6 +32,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from enum import Enum, auto
+from itertools import chain
 import re
 
 from pydantic import BaseModel
@@ -40,6 +41,7 @@ from kaquel.errors import DecodeError, LeadingWildcardsForbidden
 from kaquel.query import (
     BooleanQuery,
     ExistsQuery,
+    MatchAllQuery,
     MatchPhraseQuery,
     MatchQuery,
     MultiMatchQuery,
@@ -626,6 +628,15 @@ def parse_kql(
         allow_leading_wildcards=allow_leading_wildcards,
     )
     token_iter = parse_kql_tokens(kuery)
+
+    # Check for an empty query.
+    first_token = next(token_iter)
+    if first_token.type == KQLTokenType.END:
+        return MatchAllQuery()
+
+    # Requeue the first token.
+    token_iter = chain(iter((first_token,)), token_iter)
+
     result, token = _parse_kql_or_query(token_iter, options=options)
     if token.type != KQLTokenType.END:
         raise UnexpectedKQLToken(token)

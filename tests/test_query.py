@@ -35,6 +35,7 @@ import pytest
 from kaquel.query import (
     BooleanQuery,
     ExistsQuery,
+    MatchAllQuery,
     MatchPhraseQuery,
     MatchQuery,
     MultiMatchQuery,
@@ -97,6 +98,10 @@ def normalize_boolean_query_minimum_should_match(
         (
             ExistsQuery(field="a"),
             {"exists": {"field": "a"}},
+        ),
+        (
+            MatchAllQuery(),
+            {"match_all": {}},
         ),
         (
             MatchPhraseQuery(field="a", query="b"),

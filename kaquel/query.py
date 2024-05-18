@@ -159,6 +159,25 @@ class ExistsQuery(Query):
         return {"exists": {"field": self.field}}
 
 
+class MatchAllQuery(Query):
+    """Match all query.
+
+    See `Match all query`_ for more information.
+
+    .. _Match all query:
+        https://www.elastic.co/guide/en/elasticsearch/reference/current/
+        query-dsl-match-all-query.html
+    """
+
+    def render(self, /) -> dict:
+        """Render as a Python dictionary.
+
+        :return: Rendered query.
+        :meta private:
+        """
+        return {"match_all": {}}
+
+
 class MatchPhraseQuery(Query):
     """Match phrase query.
 

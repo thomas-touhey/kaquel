@@ -43,6 +43,7 @@ from kaquel.kql import (
 from kaquel.query import (
     BooleanQuery,
     ExistsQuery,
+    MatchAllQuery,
     MatchPhraseQuery,
     MatchQuery,
     MultiMatchQuery,
@@ -448,6 +449,10 @@ def test_parse_invalid_token() -> None:
         ),
         # Other tests for various code paths.
         (
+            "  \t  ",
+            MatchAllQuery(),
+        ),
+        (
             "hello: (not world)",
             BooleanQuery(
                 must_not=MatchQuery(field="hello", query="world"),
@@ -511,7 +516,7 @@ def test_parser(raw: str, query: Query) -> None:
 @pytest.mark.parametrize(
     "raw",
     (
-        "",  # Empty sequence.
+        ":",
         "hello: (not)",
         "hello: (not (abc",
         'popcorn > "all"',
