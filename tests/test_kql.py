@@ -514,6 +514,34 @@ def test_parser(raw: str, query: Query) -> None:
 
 
 @pytest.mark.parametrize(
+    "raw,query",
+    (
+        (
+            "a: b AND c",
+            BooleanQuery(
+                must=[
+                    MatchQuery(field="a", query="b"),
+                    MultiMatchQuery(query="c", lenient=True),
+                ],
+            ),
+        ),
+        (
+            "a: (b AND c)",
+            BooleanQuery(
+                must=[
+                    MatchQuery(field="a", query="b"),
+                    MatchQuery(field="a", query="c"),
+                ],
+            ),
+        ),
+    ),
+)
+def test_parser_with_must_clause(raw: str, query: Query) -> None:
+    """Test that the must switch works correctly for the AND function."""
+    assert parse_kql(raw, filters_in_must_clause=True) == query
+
+
+@pytest.mark.parametrize(
     "raw",
     (
         ":",

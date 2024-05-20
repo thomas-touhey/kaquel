@@ -217,6 +217,9 @@ class _KQLParsingOptions(BaseModel):
     allow_leading_wildcards: bool
     """Whether to allow leading wildcards or not."""
 
+    filters_in_must_clause: bool
+    """Whether filters should be in the 'filter' or 'must' clause."""
+
 
 class UnexpectedKQLToken(DecodeError):
     """An unexpected KQL token was obtained."""
@@ -304,6 +307,9 @@ def _parse_kql_and_value_list(
 
     if len(elements) == 1:
         return elements[0], token
+
+    if options.filters_in_must_clause:
+        return BooleanQuery(must=elements), token
 
     return BooleanQuery(filter=elements), token
 
@@ -568,6 +574,9 @@ def _parse_kql_and_query(
     if len(elements) == 1:
         return elements[0], token
 
+    if options.filters_in_must_clause:
+        return BooleanQuery(must=elements), token
+
     return BooleanQuery(filter=elements), token
 
 
@@ -615,11 +624,14 @@ def parse_kql(
     /,
     *,
     allow_leading_wildcards: bool = True,
+    filters_in_must_clause: bool = False,
 ) -> Query:
     """Parse a KQL expression into an ElasticSearch query.
 
     :param kuery: KQL expression to parse.
     :param allow_leading_wildcards: Whether to allow leading wildcards.
+    :param filters_in_must_clause: Whether filters should be in the
+        'filter' or 'must' clause.
     :return: Parsed query.
     :raises DecodeError: A decoding error has occurred.
     :raises LeadingWildcardsForbidden: Leading wildcards were present while
@@ -627,6 +639,7 @@ def parse_kql(
     """
     options = _KQLParsingOptions(
         allow_leading_wildcards=allow_leading_wildcards,
+        filters_in_must_clause=filters_in_must_clause,
     )
     token_iter = parse_kql_tokens(kuery)
 
