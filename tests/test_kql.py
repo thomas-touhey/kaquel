@@ -36,6 +36,7 @@ from kaquel.errors import DecodeError, LeadingWildcardsForbidden
 from kaquel.kql import (
     KQLToken as Token,
     KQLTokenType as TokenType,
+    KQLValueToken as ValueToken,
     UnexpectedKQLToken,
     parse_kql,
     parse_kql_tokens,
@@ -264,7 +265,8 @@ from kaquel.query import (
 def test_parse_tokens(raw: str, tokens: list[Token]) -> None:
     """Check that we obtain the correct tokens for the given requests."""
     assert [
-        (token.type, token.value) for token in parse_kql_tokens(raw)
+        (token.type, token.value if isinstance(token, ValueToken) else None)
+        for token in parse_kql_tokens(raw)
     ] == tokens + [(TokenType.END, None)]
 
 
@@ -451,6 +453,35 @@ def test_parse_invalid_token() -> None:
         (
             "  \t  ",
             MatchAllQuery(),
+        ),
+        (
+            "*: *",
+            MatchAllQuery(),
+        ),
+        (
+            "*: hello",
+            MultiMatchQuery(query="hello", lenient=True),
+        ),
+        (
+            '*: "hello"',
+            MultiMatchQuery(
+                type=MultiMatchQueryType.PHRASE,
+                query="hello",
+                lenient=True,
+            ),
+        ),
+        (
+            '*: (hello or "world")',
+            BooleanQuery(
+                should=[
+                    MultiMatchQuery(query="hello", lenient=True),
+                    MultiMatchQuery(
+                        type=MultiMatchQueryType.PHRASE,
+                        query="world",
+                        lenient=True,
+                    ),
+                ],
+            ),
         ),
         (
             "hello: (not world)",

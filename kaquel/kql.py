@@ -34,6 +34,7 @@ from collections.abc import Iterator
 from enum import Enum, auto
 from itertools import chain
 import re
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -52,6 +53,9 @@ from kaquel.query import (
     RangeQuery,
 )
 from kaquel.utils import Runk
+
+
+__all__ = ["parse_kql"]
 
 
 _KQL_TOKEN_PATTERN = re.compile(
@@ -88,7 +92,24 @@ class KQLTokenType(Enum):
     NOT = auto()
 
 
-_KQL_TOKEN_MAPPING: dict[str, KQLTokenType] = {
+_KQL_TOKEN_MAPPING: dict[
+    str,
+    Literal[
+        KQLTokenType.END,
+        KQLTokenType.LTE,
+        KQLTokenType.GTE,
+        KQLTokenType.LT,
+        KQLTokenType.GT,
+        KQLTokenType.COLON,
+        KQLTokenType.LPAR,
+        KQLTokenType.RPAR,
+        KQLTokenType.LBRACE,
+        KQLTokenType.RBRACE,
+        KQLTokenType.OR,
+        KQLTokenType.AND,
+        KQLTokenType.NOT,
+    ],
+] = {
     "<=": KQLTokenType.LTE,
     ">=": KQLTokenType.GTE,
     "<": KQLTokenType.LT,
@@ -105,13 +126,46 @@ _KQL_TOKEN_MAPPING: dict[str, KQLTokenType] = {
 """Direct token mapping."""
 
 
-class KQLToken(BaseModel):
-    """Token, as emitted by the lexer."""
+class KQLBasicToken(BaseModel):
+    """Basic token, as emitted by the lexer."""
 
-    type: KQLTokenType
+    type: Literal[
+        KQLTokenType.END,
+        KQLTokenType.LTE,
+        KQLTokenType.GTE,
+        KQLTokenType.LT,
+        KQLTokenType.GT,
+        KQLTokenType.COLON,
+        KQLTokenType.LPAR,
+        KQLTokenType.RPAR,
+        KQLTokenType.LBRACE,
+        KQLTokenType.RBRACE,
+        KQLTokenType.OR,
+        KQLTokenType.AND,
+        KQLTokenType.NOT,
+    ]
     """Type of the token."""
 
-    value: str | None = None
+    line: int
+    """Line at which the token starts, counting from 1."""
+
+    column: int
+    """Column at which the token starts, counting from 1."""
+
+    offset: int
+    """Offset at which the token starts, counting from 0."""
+
+
+class KQLValueToken(BaseModel):
+    """Token, as emitted by the lexer."""
+
+    type: Literal[
+        KQLTokenType.UNQUOTED_LITERAL,
+        KQLTokenType.QUOTED_LITERAL,
+    ]
+    """Type of the token."""
+
+    value: str
     """Contents of the token, if relevant."""
 
     line: int
@@ -122,6 +176,9 @@ class KQLToken(BaseModel):
 
     offset: int
     """Offset at which the token starts, counting from 0."""
+
+
+KQLToken = KQLBasicToken | KQLValueToken
 
 
 # ---
@@ -170,35 +227,45 @@ def parse_kql_tokens(kuery: str, /) -> Iterator[KQLToken]:
             )
 
         if match[1] is not None:
-            typ, value = _KQL_TOKEN_MAPPING[match[1]], None
+            yield KQLBasicToken(
+                type=_KQL_TOKEN_MAPPING[match[1]],
+                line=runk.line,
+                column=runk.column,
+                offset=runk.offset,
+            )
         elif match[2] is not None:
-            typ, value = (
-                KQLTokenType.QUOTED_LITERAL,
-                _unescape_kql_literal(match[2]),
+            yield KQLValueToken(
+                type=KQLTokenType.QUOTED_LITERAL,
+                value=_unescape_kql_literal(match[2]),
+                line=runk.line,
+                column=runk.column,
+                offset=runk.offset,
             )
         elif match[3] is not None:
             try:
-                typ, value = _KQL_TOKEN_MAPPING[match[3].casefold()], None
+                typ = _KQL_TOKEN_MAPPING[match[3].casefold()]
             except KeyError:
-                typ, value = (
-                    KQLTokenType.UNQUOTED_LITERAL,
-                    _unescape_kql_literal(match[3]),
+                yield KQLValueToken(
+                    type=KQLTokenType.UNQUOTED_LITERAL,
+                    value=_unescape_kql_literal(match[3]),
+                    line=runk.line,
+                    column=runk.column,
+                    offset=runk.offset,
+                )
+            else:
+                yield KQLBasicToken(
+                    type=typ,
+                    line=runk.line,
+                    column=runk.column,
+                    offset=runk.offset,
                 )
         else:  # pragma: no cover
             raise NotImplementedError()
 
-        yield KQLToken(
-            type=typ,
-            value=value,
-            line=runk.line,
-            column=runk.column,
-            offset=runk.offset,
-        )
-
         runk.count(match[0])
         kuery = kuery[match.end() :]
 
-    yield KQLToken(
+    yield KQLBasicToken(
         type=KQLTokenType.END,
         line=runk.line,
         column=runk.column,
@@ -273,10 +340,18 @@ def _parse_kql_and_value_list(
 
             token = next(token_iter)
         elif token.type == KQLTokenType.QUOTED_LITERAL:
-            result = MatchPhraseQuery(
-                field=field,
-                query=token.value,
-            )
+            if field == "*":
+                result = MultiMatchQuery(
+                    type=MultiMatchQueryType.PHRASE,
+                    query=token.value,
+                    lenient=True,
+                )
+            else:
+                result = MatchPhraseQuery(
+                    field=field,
+                    query=token.value,
+                )
+
             token = next(token_iter)
         elif token.type == KQLTokenType.UNQUOTED_LITERAL:
             query_parts = [token.value or ""]
@@ -284,8 +359,6 @@ def _parse_kql_and_value_list(
             for token in token_iter:
                 if token.type != KQLTokenType.UNQUOTED_LITERAL:
                     break
-                if token.value is None:  # pragma: no cover
-                    raise ValueError("Unquoted literal without a value!")
 
                 query_parts.append(token.value)
 
@@ -294,7 +367,13 @@ def _parse_kql_and_value_list(
             ):
                 raise LeadingWildcardsForbidden()
 
-            result = MatchQuery(field=field, query=" ".join(query_parts))
+            if field == "*":
+                result = MultiMatchQuery(
+                    query=" ".join(query_parts),
+                    lenient=True,
+                )
+            else:
+                result = MatchQuery(field=field, query=" ".join(query_parts))
         else:
             raise UnexpectedKQLToken(token)
 
@@ -462,10 +541,21 @@ def _parse_kql_expression(
 
                 token = next(token_iter)
             elif comp_token.type == KQLTokenType.QUOTED_LITERAL:
-                result = MatchPhraseQuery(
-                    field=prefix + (token.value or ""),
-                    query=comp_token.value,
-                )
+                if token.value == "*":
+                    # Even in a nested context, i.e. ``prefix`` being
+                    # non-empty, Kibana interprets this as the field being
+                    # a lone wildcard, so we want to do the same.
+                    result = MultiMatchQuery(
+                        type=MultiMatchQueryType.PHRASE,
+                        query=comp_token.value,
+                        lenient=True,
+                    )
+                else:
+                    result = MatchPhraseQuery(
+                        field=prefix + (token.value or ""),
+                        query=comp_token.value,
+                    )
+
                 token = next(token_iter)
             elif comp_token.type == KQLTokenType.UNQUOTED_LITERAL:
                 query_parts: list[str] = [comp_token.value or ""]
@@ -473,8 +563,6 @@ def _parse_kql_expression(
                 for comp_token in token_iter:
                     if comp_token.type != KQLTokenType.UNQUOTED_LITERAL:
                         break
-                    if comp_token.value is None:  # pragma: no cover
-                        raise ValueError("Unquoted literal without a value!")
 
                     query_parts.append(comp_token.value)
 
@@ -483,7 +571,19 @@ def _parse_kql_expression(
                 ):
                     raise LeadingWildcardsForbidden()
 
-                if "*" in query_parts:
+                if token.value == "*":
+                    # Even in a nested context, i.e. ``prefix`` being
+                    # non-empty, Kibana interprets this as the field being
+                    # a lone wildcard, so we want to do the same.
+                    if "*" in query_parts:
+                        result = MatchAllQuery()
+                    else:
+                        result = MultiMatchQuery(
+                            type=MultiMatchQueryType.BEST_FIELDS,
+                            query=" ".join(query_parts),
+                            lenient=True,
+                        )
+                elif "*" in query_parts:
                     result = ExistsQuery(field=prefix + (token.value or ""))
                 else:
                     result = MatchQuery(
@@ -498,16 +598,12 @@ def _parse_kql_expression(
             query_parts = [token.value or ""]
 
             if op_token.type == KQLTokenType.UNQUOTED_LITERAL:
-                if op_token.value is None:  # pragma: no cover
-                    raise ValueError("Unquoted literal without a value!")
 
                 query_parts.append(op_token.value)
 
                 for op_token in token_iter:
                     if op_token.type != KQLTokenType.UNQUOTED_LITERAL:
                         break
-                    if op_token.value is None:  # pragma: no cover
-                        raise ValueError("Unquoted literal without a value!")
 
                     query_parts.append(op_token.value)
 
