@@ -26,7 +26,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-C license and that you accept its terms.
 # *****************************************************************************
-"""Kuery lexer."""
+"""KQL lexer and parser."""
 
 from __future__ import annotations
 
@@ -620,6 +620,7 @@ def parse_kql(
 
     :param kuery: KQL expression to parse.
     :param allow_leading_wildcards: Whether to allow leading wildcards.
+    :return: Parsed query.
     :raises DecodeError: A decoding error has occurred.
     :raises LeadingWildcardsForbidden: Leading wildcards were present while
         disabled.

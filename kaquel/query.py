@@ -353,6 +353,36 @@ class NestedQuery(Query):
         return {"nested": result}
 
 
+class QueryStringQuery(Query):
+    """Query string query.
+
+    See `Query string query`_ for more information.
+
+    .. _Query string query:
+        https://www.elastic.co/guide/en/elasticsearch/reference/current/
+        query-dsl-query-string-query.html
+    """
+
+    query: Annotated[str, StringConstraints(min_length=1)]
+    """Query to parse and use for search.
+
+    See `Query string syntax`_ for more information.
+
+    .. _Query string syntax:
+        https://www.elastic.co/guide/en/elasticsearch/reference/current/
+        query-dsl-query-string-query.html#query-string-syntax
+    """
+
+    def render(self, /) -> dict:
+        """Render as a Python dictionary.
+
+        :return: Rendered query.
+        :meta private:
+        """
+        result = {"query": self.query}
+        return {"query_string": result}
+
+
 class RangeQuery(Query):
     """Range query.
 

@@ -8,3 +8,4 @@ In this section, we will explore the formats managed by the project.
 
     formats/es
     formats/kql
+    formats/lucene

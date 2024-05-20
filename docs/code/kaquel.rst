@@ -8,5 +8,6 @@ This section presents the code reference under the ``kaquel`` namespace.
 
    kaquel/errors
    kaquel/kql
+   kaquel/lucene
    kaquel/query
    kaquel/utils

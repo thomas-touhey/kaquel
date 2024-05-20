@@ -41,6 +41,7 @@ from kaquel.query import (
     MultiMatchQuery,
     NestedQuery,
     Query,
+    QueryStringQuery,
     RangeQuery,
 )
 
@@ -130,6 +131,10 @@ def normalize_boolean_query_minimum_should_match(
                     "score_mode": "avg",
                 },
             },
+        ),
+        (
+            QueryStringQuery(query="a:b"),
+            {"query_string": {"query": "a:b"}},
         ),
         (
             RangeQuery(field="date", lt="now-2d"),
