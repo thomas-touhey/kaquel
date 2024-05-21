@@ -7,6 +7,7 @@ This section presents the code reference under the ``kaquel`` namespace.
    :maxdepth: 1
 
    kaquel/errors
+   kaquel/es_query
    kaquel/kql
    kaquel/lucene
    kaquel/query

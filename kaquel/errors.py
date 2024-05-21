@@ -31,7 +31,7 @@
 from __future__ import annotations
 
 
-class Error(Exception):
+class Error(ValueError):
     """An error has occurred in a Kaquel function."""
 
     def __init__(self, message: str, /) -> None:

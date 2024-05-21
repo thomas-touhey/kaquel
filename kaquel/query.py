@@ -44,6 +44,7 @@ from typing import Annotated, Any
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     StringConstraints,
     field_validator,
@@ -53,6 +54,9 @@ from pydantic import (
 
 class Query(BaseModel, ABC):
     """Any query."""
+
+    model_config = ConfigDict(extra="forbid")
+    """Model configuration."""
 
     @abstractmethod
     def render(self, /) -> dict:
