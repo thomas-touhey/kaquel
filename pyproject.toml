@@ -10,6 +10,16 @@ readme = "README.rst"
 homepage = "https://kaquel.touhey.pro/"
 repository = "https://gitlab.com/thomas.touhey/kaquel"
 authors = ["Thomas Touhey <thomas@touhey.fr>"]
+keywords = [
+    "elasticsearch",
+    "es_query",
+    "es-query",
+    "kibana",
+    "kql",
+    "lucene",
+    "parsing",
+    "query",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
