@@ -34,7 +34,7 @@ from collections.abc import Iterator
 from enum import Enum, auto
 from itertools import chain
 import re
-from typing import Literal
+from typing import Literal, Union
 
 from pydantic import BaseModel
 
@@ -178,7 +178,7 @@ class KQLValueToken(BaseModel):
     """Offset at which the token starts, counting from 0."""
 
 
-KQLToken = KQLBasicToken | KQLValueToken
+KQLToken = Union[KQLBasicToken, KQLValueToken]
 
 
 # ---

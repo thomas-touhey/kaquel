@@ -39,7 +39,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import date
-from enum import StrEnum
+from enum import Enum
 from typing import Annotated, Any
 
 from pydantic import (
@@ -232,7 +232,7 @@ class MatchQuery(Query):
         return {"match": {self.field: self.query}}
 
 
-class MultiMatchQueryType(StrEnum):
+class MultiMatchQueryType(str, Enum):
     """Multi-match query type.
 
     See `multi_match query types`_ for more information.
@@ -304,7 +304,7 @@ class MultiMatchQuery(Query):
         return {"multi_match": result}
 
 
-class NestedScoreMode(StrEnum):
+class NestedScoreMode(str, Enum):
     """Mode in which a nested query affects the root document's score."""
 
     AVG = "avg"
