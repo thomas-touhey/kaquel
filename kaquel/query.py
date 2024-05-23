@@ -148,7 +148,7 @@ class ExistsQuery(Query):
 
     .. _Exists query:
         https://www.elastic.co/guide/en/elasticsearch/reference/current/
-        query-dsl-exists-query.html`
+        query-dsl-exists-query.html
     """
 
     field: Annotated[str, StringConstraints(min_length=1)]
