@@ -42,7 +42,7 @@ References
 ----------
 
 These sections provide technical reference for APIs and other aspects of
-Cahute's machinery. They go into detail, and therefore, assume you have a
+Kaquel's machinery. They go into detail, and therefore, assume you have a
 basic understanding of key concepts.
 
 .. toctree::
