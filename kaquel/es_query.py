@@ -100,7 +100,7 @@ def _parse_es_query(query: Any, /, *, context: str = ".") -> Query:
                     content[key] = [
                         _parse_es_query(
                             element,
-                            context=context + "bool[must{i}].",
+                            context=context + f"bool[{key}{i}].",
                         )
                         for i, element in enumerate(content[key])
                     ]
@@ -108,7 +108,7 @@ def _parse_es_query(query: Any, /, *, context: str = ".") -> Query:
                     content[key] = [
                         _parse_es_query(
                             content[key],
-                            context=context + "bool[must0].",
+                            context=context + f"bool[{key}0].",
                         ),
                     ]
 
