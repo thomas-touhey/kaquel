@@ -30,9 +30,11 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 import pytest
 
-from kaquel.errors import DecodeError, LeadingWildcardsForbidden
+from kaquel.errors import DecodeError, LeadingWildcardsForbidden, RenderError
 from kaquel.kql import (
     KQLToken as Token,
     KQLTokenType as TokenType,
@@ -40,6 +42,7 @@ from kaquel.kql import (
     UnexpectedKQLToken,
     parse_kql,
     parse_kql_tokens,
+    render_as_kql,
 )
 from kaquel.query import (
     BooleanQuery,
@@ -543,6 +546,9 @@ def test_parser(raw: str, query: Query) -> None:
     """Test that the parsed result of a query is correct."""
     assert parse_kql(raw) == query
 
+    # Also ensure that we are actually able to re-render the query here.
+    render_as_kql(query)
+
 
 @pytest.mark.parametrize(
     "raw,query",
@@ -615,3 +621,270 @@ def test_parser_with_forbidden_leading_wildcards(raw: str) -> None:
     """Test that the leading wildcard is correctly forbidden."""
     with pytest.raises(LeadingWildcardsForbidden):
         parse_kql(raw, allow_leading_wildcards=False)
+
+
+@pytest.mark.parametrize(
+    "query,expected",
+    (
+        (
+            MatchAllQuery(),
+            "*",
+        ),
+        (
+            NestedQuery(
+                path="user",
+                query=MatchPhraseQuery(field="user.name", query="John"),
+                score_mode=NestedScoreMode.NONE,
+            ),
+            'user: { name: "John" }',
+        ),
+        (
+            BooleanQuery(
+                filter=[
+                    MatchQuery(field="a", query="a"),
+                    BooleanQuery(
+                        should=[
+                            MatchQuery(field="b", query="b"),
+                            MatchQuery(field="c", query="c"),
+                        ],
+                    ),
+                ],
+            ),
+            "a: a and (b: b or c: c)",
+        ),
+        (
+            BooleanQuery(
+                should=[
+                    MatchQuery(field="a", query="a"),
+                    BooleanQuery(
+                        filter=[
+                            MatchQuery(field="b", query="b"),
+                            MatchQuery(field="c", query="c"),
+                        ],
+                    ),
+                ],
+            ),
+            "a: a or b: b and c: c",
+        ),
+        (
+            BooleanQuery(
+                must_not=[
+                    BooleanQuery(
+                        filter=[
+                            MatchQuery(field="a", query="a"),
+                            MatchQuery(field="b", query="b"),
+                        ],
+                    ),
+                ],
+            ),
+            "not (a: a and b: b)",
+        ),
+        (
+            BooleanQuery(must_not=[MatchQuery(field="a", query="a")]),
+            "not a: a",
+        ),
+        (
+            BooleanQuery(
+                filter=[MatchQuery(field="a", query="a")],
+                must_not=[MatchQuery(field="b", query="b")],
+            ),
+            "a: a and not b: b",
+        ),
+        (
+            BooleanQuery(
+                filter=[MatchQuery(field="a", query="a")],
+                should=[MatchQuery(field="b", query="b")],
+            ),
+            "a: a and b: b",
+        ),
+        (
+            BooleanQuery(
+                filter=[
+                    MatchQuery(field="a", query="a"),
+                    MatchQuery(field="b", query="b"),
+                ],
+                should=[
+                    MatchQuery(field="c", query="c"),
+                    MatchQuery(field="d", query="d"),
+                ],
+                must_not=[
+                    MatchQuery(field="e", query="e"),
+                    MatchQuery(field="f", query="f"),
+                ],
+            ),
+            "a: a and b: b and (c: c or d: d) and not (e: e or f: f)",
+        ),
+        (
+            BooleanQuery(
+                should=[
+                    MatchQuery(field="a", query="a"),
+                    MatchQuery(field="b", query="b"),
+                ],
+                minimum_should_match=2,
+            ),
+            "a: a and b: b",
+        ),
+        (ExistsQuery(field="a"), "a: *"),
+        (
+            MatchQuery(field="a", query=date(2012, 12, 21)),
+            "a: 2012-12-21",
+        ),
+        (
+            MultiMatchQuery(query="a b", lenient=True),
+            "a b",
+        ),
+        (
+            MultiMatchQuery(
+                type=MultiMatchQueryType.PHRASE,
+                query="a b",
+                lenient=True,
+            ),
+            '"a b"',
+        ),
+        (
+            RangeQuery(field="year", gt=1999, gte=2000, lt=2021, lte=2020),
+            "year > 1999 and year >= 2000 and year < 2021 and year <= 2020",
+        ),
+        (
+            BooleanQuery(must_not=[RangeQuery(field="year", gt=1999)]),
+            "not year > 1999",
+        ),
+        (
+            BooleanQuery(
+                must_not=[RangeQuery(field="year", gt=1999, lte=2020)],
+            ),
+            "not (year > 1999 and year <= 2020)",
+        ),
+    ),
+)
+def test_render(query: Query, expected: str) -> None:
+    """Test that KQL query rendering works correctly."""
+    assert render_as_kql(query) == expected
+
+
+@pytest.mark.parametrize(
+    "query,pattern",
+    (
+        (BooleanQuery(), "empty boolean query"),
+        (
+            BooleanQuery(
+                should=[
+                    MatchQuery(field="a", query="a"),
+                    MatchQuery(field="b", query="b"),
+                    MatchQuery(field="c", query="c"),
+                ],
+                minimum_should_match=2,
+            ),
+            "minimum_should_match",
+        ),
+        (
+            MultiMatchQuery(query="a b"),
+            "lenient",
+        ),
+        (
+            MultiMatchQuery(
+                query="John",
+                fields=["firstName", "lastName"],
+                lenient=True,
+            ),
+            "fields",
+        ),
+        (
+            MultiMatchQuery(
+                type=MultiMatchQueryType.CROSS_FIELDS,
+                query="a b",
+                lenient=True,
+            ),
+            "with type",
+        ),
+        (
+            NestedQuery(
+                path="user",
+                query=MatchQuery(field="user.name", query="John"),
+            ),
+            "score mode",
+        ),
+        (
+            NestedQuery(
+                path="user",
+                query=ExistsQuery(field="name"),
+                score_mode=NestedScoreMode.NONE,
+            ),
+            "prefix",
+        ),
+        (
+            NestedQuery(
+                path="user",
+                query=MatchQuery(field="name", query="John"),
+                score_mode=NestedScoreMode.NONE,
+            ),
+            "prefix",
+        ),
+        (
+            NestedQuery(
+                path="user",
+                query=MatchPhraseQuery(field="name", query="John"),
+                score_mode=NestedScoreMode.NONE,
+            ),
+            "prefix",
+        ),
+        (
+            NestedQuery(
+                path="user",
+                query=NestedQuery(
+                    path="names",
+                    query=MatchQuery(field="user.names.first", query="John"),
+                    score_mode=NestedScoreMode.NONE,
+                ),
+                score_mode=NestedScoreMode.NONE,
+            ),
+            "prefix",
+        ),
+        (
+            NestedQuery(
+                path="now",
+                query=RangeQuery(
+                    field="year",
+                    lt=2020,
+                ),
+                score_mode=NestedScoreMode.NONE,
+            ),
+            "prefix",
+        ),
+    ),
+)
+def test_render_error(query: Query, pattern: str) -> None:
+    """Test that KQL render errors are correctly raised."""
+    with pytest.raises(RenderError, match=pattern):
+        render_as_kql(query)
+
+
+def test_render_with_must_clause() -> None:
+    """Test that we can switch the AND clause if need be."""
+    assert (
+        render_as_kql(
+            BooleanQuery(
+                should=[BooleanQuery(must=[MatchQuery(field="a", query="b")])],
+            ),
+            filters_in_must_clause=True,
+        )
+        == "a: b"
+    )
+
+    with pytest.raises(RenderError, match=r"filters_in_must_clause"):
+        render_as_kql(
+            BooleanQuery(
+                should=[
+                    BooleanQuery(filter=[MatchQuery(field="a", query="b")]),
+                ],
+            ),
+            filters_in_must_clause=True,
+        )
+
+    with pytest.raises(RenderError, match=r"filters_in_must_clause"):
+        render_as_kql(
+            BooleanQuery(
+                should=[BooleanQuery(must=[MatchQuery(field="a", query="b")])],
+            ),
+            filters_in_must_clause=False,
+        )

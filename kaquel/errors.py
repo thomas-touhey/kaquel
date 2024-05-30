@@ -70,3 +70,7 @@ class LeadingWildcardsForbidden(Error):
 
     def __init__(self, /) -> None:
         super().__init__("Leading wildcards are forbidden.")
+
+
+class RenderError(Error):
+    """An error has occurred while rendering a query."""

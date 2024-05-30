@@ -9,8 +9,8 @@ The `Kibana Query Language`_ (KQL), known in the Kibana source as "Kuery", is
 a full text query language that resolves into ElasticSearch queries.
 It follows the `Kuery grammar`_.
 
-Kaquel only supports parsing with KQL, in the form of its :py:func:`parse_kql`
-function.
+Kaquel supports both parsing and rendering with KQL, in the form of its
+:py:func:`parse_kql` and :py:func:`render_as_kql` functions.
 
 .. _Kibana Query Language:
     https://www.elastic.co/guide/en/kibana/current/kuery-query.html

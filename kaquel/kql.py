@@ -26,11 +26,15 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-C license and that you accept its terms.
 # *****************************************************************************
-"""KQL lexer and parser."""
+"""KQL lexer, parser and renderer.
+
+See :ref:`format-kql` for more information.
+"""
 
 from __future__ import annotations
 
 from collections.abc import Iterator
+from datetime import date
 from enum import Enum, auto
 from itertools import chain
 import re
@@ -38,7 +42,7 @@ from typing import Literal, Union
 
 from pydantic import BaseModel
 
-from kaquel.errors import DecodeError, LeadingWildcardsForbidden
+from kaquel.errors import DecodeError, LeadingWildcardsForbidden, RenderError
 from kaquel.query import (
     BooleanQuery,
     ExistsQuery,
@@ -55,7 +59,7 @@ from kaquel.query import (
 from kaquel.utils import Runk
 
 
-__all__ = ["parse_kql"]
+__all__ = ["parse_kql", "render_as_kql"]
 
 
 _KQL_TOKEN_PATTERN = re.compile(
@@ -68,6 +72,9 @@ _KQL_TOKEN_PATTERN = re.compile(
 
 _KQL_ESCAPE_PATTERN = re.compile(r"\\(.)")
 """Pattern for finding escape sequences."""
+
+_KQL_TO_ESCAPE_PATTERN = re.compile(r'([\\\\():<>"])')
+"""Pattern for finding sequences to escape."""
 
 
 class KQLTokenType(Enum):
@@ -579,7 +586,6 @@ def _parse_kql_expression(
                         result = MatchAllQuery()
                     else:
                         result = MultiMatchQuery(
-                            type=MultiMatchQueryType.BEST_FIELDS,
                             query=" ".join(query_parts),
                             lenient=True,
                         )
@@ -752,3 +758,286 @@ def parse_kql(
         raise UnexpectedKQLToken(token)
 
     return result
+
+
+# ---
+# Renderer.
+# ---
+
+
+def _render_kql_literal(literal: str | int | float | date, /) -> str:
+    """Render a string as a KQL literal.
+
+    This utility is able to escape said literal.
+
+    :param literal: Literal to render.
+    :return: Rendered literal.
+    """
+    if isinstance(literal, date):
+        raw = literal.isoformat()
+    else:
+        raw = str(literal)
+
+    return _KQL_TO_ESCAPE_PATTERN.sub(r"\\\1", raw)
+
+
+def _render_as_kql_recursive(
+    query: Query,
+    /,
+    *,
+    filters_in_must_clause: bool,
+    prefix: str = "",
+    in_and: bool = False,
+    in_not: bool = False,
+) -> str:
+    """Render the KQL query recursively.
+
+    :param query: Query to render recursively.
+    :param filters_in_must_clause: Filters should be retrieved from the 'must'
+        clause rather than 'filter' clause for boolean queries.
+    :param prefix: Prefix to remove from the field.
+    :param in_and: Whether we are in an AND context, i.e. we need to add
+        parenthesis if we have an OR.
+    :param in_not: Whether we are in a NOT context.
+    :return: Rendered query as KQL.
+    """
+    if isinstance(query, BooleanQuery):
+        # TODO: Check if we can produce the short syntax field: (a OR b AND c)
+
+        if filters_in_must_clause:
+            if query.filter:
+                raise RenderError(
+                    "Cannot render a boolean query with filter clause and "
+                    + "filters_in_must_clause=True",
+                )
+        elif query.must:
+            raise RenderError(
+                "Cannot render a boolean query with must clause and "
+                + "filters_in_must_clause=False",
+            )
+
+        # If 'minimum_should_match' is defined, and does not match either 1
+        # (OR clause) or the number of clauses in 'should' (AND clause), it is
+        # not renderable as KQL.
+        if query.should and query.minimum_should_match == len(query.should):
+            query = BooleanQuery(
+                filter=query.filter + query.should,
+                must_not=query.must_not,
+            )
+        elif query.minimum_should_match not in (None, 1):
+            raise RenderError(
+                "Cannot render a boolean query with complex "
+                + "minimum_should_match value",
+            )
+
+        if not query.must and not query.filter and not query.must_not:
+            # We are facing an OR clause.
+            if not query.should:
+                raise RenderError("Cannot render an empty boolean query.")
+
+            multiple_clauses_expected = len(query.should) > 1
+            result = " or ".join(
+                _render_as_kql_recursive(
+                    sub_query,
+                    filters_in_must_clause=filters_in_must_clause,
+                    prefix=prefix,
+                    in_and=in_and and not multiple_clauses_expected,
+                    in_not=in_not and not multiple_clauses_expected,
+                )
+                for sub_query in query.should
+            )
+
+            if multiple_clauses_expected and (in_and or in_not):
+                return f"({result})"
+
+            return result
+
+        # We are facing an AND clause.
+        multiple_clauses_expected = (
+            len(query.must)
+            + len(query.filter)
+            + (len(query.must_not) > 0)
+            + (len(query.should) > 0)
+            > 1
+        )
+
+        and_clauses = []
+        for sub_query in chain(query.must, query.filter):
+            and_clauses.append(
+                _render_as_kql_recursive(
+                    sub_query,
+                    filters_in_must_clause=filters_in_must_clause,
+                    prefix=prefix,
+                    in_and=in_and or multiple_clauses_expected,
+                    in_not=in_not and not multiple_clauses_expected,
+                ),
+            )
+
+        if len(query.should) == 1:
+            and_clauses.append(
+                _render_as_kql_recursive(
+                    query.should[0],
+                    filters_in_must_clause=filters_in_must_clause,
+                    prefix=prefix,
+                    in_and=in_and or multiple_clauses_expected,
+                    in_not=in_not and not multiple_clauses_expected,
+                ),
+            )
+        elif query.should:
+            and_clauses.append(
+                "("
+                + " or ".join(
+                    _render_as_kql_recursive(
+                        sub_query,
+                        filters_in_must_clause=filters_in_must_clause,
+                        prefix=prefix,
+                    )
+                    for sub_query in query.should
+                )
+                + ")",
+            )
+
+        if len(query.must_not) == 1:
+            and_clauses.append(
+                "not "
+                + _render_as_kql_recursive(
+                    query.must_not[0],
+                    filters_in_must_clause=filters_in_must_clause,
+                    in_not=True,
+                ),
+            )
+        elif len(query.must_not) > 1:
+            and_clauses.append(
+                "not ("
+                + " or ".join(
+                    _render_as_kql_recursive(
+                        sub_query,
+                        filters_in_must_clause=filters_in_must_clause,
+                    )
+                    for sub_query in query.must_not
+                )
+                + ")",
+            )
+
+        result = " and ".join(and_clauses)
+        if in_not and multiple_clauses_expected:
+            return f"({result})"
+
+        return result
+    elif isinstance(query, ExistsQuery):
+        if not query.field.startswith(prefix):
+            raise RenderError(
+                f"Match query field does not start with prefix {prefix}",
+            )
+
+        return query.field[len(prefix) :] + ": *"
+    elif isinstance(query, MatchAllQuery):
+        return "*"
+    elif isinstance(query, MatchPhraseQuery):
+        if not query.field.startswith(prefix):
+            raise RenderError(
+                f"Match query field does not start with prefix {prefix}",
+            )
+
+        return (
+            query.field[len(prefix) :]
+            + ': "'
+            + _render_kql_literal(query.query)
+            + '"'
+        )
+    elif isinstance(query, MatchQuery):
+        if not query.field.startswith(prefix):
+            raise RenderError(
+                f"Match query field does not start with prefix {prefix}",
+            )
+
+        return (
+            query.field[len(prefix) :]
+            + ": "
+            + _render_kql_literal(query.query)
+        )
+    elif isinstance(query, MultiMatchQuery):
+        if not query.lenient:
+            raise RenderError("Expected a lenient multi-match query")
+        if query.fields:
+            raise RenderError(
+                "Cannot render a multi-match with specific fields",
+            )
+
+        if query.type == MultiMatchQueryType.BEST_FIELDS:
+            return _render_kql_literal(query.query)
+        elif query.type == MultiMatchQueryType.PHRASE:
+            return '"' + _render_kql_literal(query.query) + '"'
+        else:
+            raise RenderError(
+                f"Cannot render a multi-match query with type {query.type}",
+            )
+    elif isinstance(query, NestedQuery):
+        if query.score_mode != NestedScoreMode.NONE:
+            raise RenderError(
+                "Cannot render a nested query with score mode "
+                + f"{query.score_mode}",
+            )
+        if not query.path.startswith(prefix):
+            raise RenderError(
+                f"Nested query path does not start with prefix {prefix}",
+            )
+
+        return (
+            query.path[len(prefix) :]
+            + ": { "
+            + _render_as_kql_recursive(
+                query.query,
+                filters_in_must_clause=filters_in_must_clause,
+                prefix=query.path + ".",
+            )
+            + " }"
+        )
+    elif isinstance(query, RangeQuery):
+        if not query.field.startswith(prefix):
+            raise RenderError(
+                f"Match query field does not start with prefix {prefix}",
+            )
+
+        and_clauses = []
+        field = query.field[len(prefix) :]
+
+        if query.gt is not None:
+            and_clauses.append(f"{field} > {_render_kql_literal(query.gt)}")
+        if query.gte is not None:
+            and_clauses.append(f"{field} >= {_render_kql_literal(query.gte)}")
+        if query.lt is not None:
+            and_clauses.append(f"{field} < {_render_kql_literal(query.lt)}")
+        if query.lte is not None:
+            and_clauses.append(f"{field} <= {_render_kql_literal(query.lte)}")
+
+        if len(and_clauses) > 1 and in_not:
+            return "(" + " and ".join(and_clauses) + ")"
+
+        return " and ".join(and_clauses)
+
+    raise RenderError(  # pragma: no cover
+        f"Cannot render a {query.__class__.__name__}",
+    )
+
+
+def render_as_kql(
+    query: Query,
+    /,
+    *,
+    filters_in_must_clause: bool = False,
+) -> str:
+    """Render the query as a KQL query.
+
+    :param query: Query to render as KQL.
+    :param filters_in_must_clause: Whether filters should be retrieved from
+        the 'must' clause rather than 'filter' clause for boolean queries.
+    :return: Rendered query as KQL.
+    :raises RenderError: An error has occurred while rendering the query;
+        usually, the query makes use of a feature that cannot be translated
+        into KQL.
+    """
+    return _render_as_kql_recursive(
+        query,
+        filters_in_must_clause=filters_in_must_clause,
+    )
