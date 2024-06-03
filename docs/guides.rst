@@ -8,3 +8,4 @@ This section consists of multiple guides for solving specific problems.
 
     guides/install
     guides/parse
+    guides/report
