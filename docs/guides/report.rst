@@ -55,4 +55,4 @@ following elements:
 * **Steps to reproduce the issue**, on both the host and any device that
   was implicated in the operation. (The order is important!)
 
-.. _Issue tracker at Gitlab: https://gitlab.com/thomas.touhey/kaquel/-/issues
+.. _Issue tracker at Gitlab: https://gitlab.com/kaquel/kaquel/-/issues

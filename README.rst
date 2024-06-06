@@ -22,7 +22,7 @@ The project is present at the following locations:
 * `kaquel project on PyPI <Kaquel on PyPI_>`_.
 
 .. _Kaquel website: https://kaquel.touhey.pro/
-.. _Kaquel on Gitlab: https://gitlab.com/thomas.touhey/kaquel
+.. _Kaquel on Gitlab: https://gitlab.com/kaquel/kaquel
 .. _Kaquel on PyPI: https://pypi.org/project/kaquel/
 .. _Parsing queries: https://kaquel.touhey.pro/guides/parse.html
 .. _ElasticSearch Query DSL:

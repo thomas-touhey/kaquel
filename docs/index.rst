@@ -6,7 +6,7 @@ query languages for ElasticSearch.
 
 You can also find the project on the following locations:
 
-* `thomas.touhey/kaquel repository on Gitlab <Kaquel on Gitlab_>`_;
+* `kaquel/kaquel repository on Gitlab <Kaquel on Gitlab_>`_;
 * `kaquel project on PyPI <Kaquel on PyPI_>`_.
 
 The project's code and documentation contents are licensed under `CeCILL-C`_
@@ -51,7 +51,7 @@ basic understanding of key concepts.
     code
 
 .. _ElasticSearch: https://www.elastic.co/elasticsearch
-.. _Kaquel on Gitlab: https://gitlab.com/thomas.touhey/kaquel
+.. _Kaquel on Gitlab: https://gitlab.com/kaquel/kaquel
 .. _Kaquel on PyPI: https://pypi.org/project/kaquel/
 .. _CeCILL-C: https://cecill.info/licences/Licence_CeCILL-C_V1-en.html
 .. _CeCILL: http://www.cecill.info/licences.en.html
