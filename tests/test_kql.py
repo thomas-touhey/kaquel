@@ -540,6 +540,31 @@ def test_parse_invalid_token() -> None:
                 lenient=True,
             ),
         ),
+        (
+            '"hello": "world"',
+            MatchPhraseQuery(field="hello", query="world"),
+        ),
+        (
+            '"hello"> 5',
+            RangeQuery(field="hello", gt="5"),
+        ),
+        (
+            '"hello": (world OR universe)',
+            BooleanQuery(
+                should=[
+                    MatchQuery(field="hello", query="world"),
+                    MatchQuery(field="hello", query="universe"),
+                ],
+            ),
+        ),
+        (
+            '"hello": { "world": "yes" }',
+            NestedQuery(
+                path="hello",
+                query=MatchPhraseQuery(field="hello.world", query="yes"),
+                score_mode=NestedScoreMode.NONE,
+            ),
+        ),
     ),
 )
 def test_parser(raw: str, query: Query) -> None:

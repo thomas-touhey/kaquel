@@ -462,7 +462,10 @@ def _parse_kql_expression(
     else:
         is_not = False
 
-    if token.type == KQLTokenType.UNQUOTED_LITERAL:
+    if token.type in (
+        KQLTokenType.UNQUOTED_LITERAL,
+        KQLTokenType.QUOTED_LITERAL,
+    ):
         op_token = next(token_iter)
         if op_token.type == KQLTokenType.GT:
             # Field range expression with "gt" range operator.
@@ -600,11 +603,17 @@ def _parse_kql_expression(
                 token = comp_token
             else:
                 raise UnexpectedKQLToken(comp_token)
+        elif token.type == KQLTokenType.QUOTED_LITERAL:
+            result = MultiMatchQuery(
+                type=MultiMatchQueryType.PHRASE,
+                query=token.value,
+                lenient=True,
+            )
+            token = op_token
         else:
             query_parts = [token.value or ""]
 
             if op_token.type == KQLTokenType.UNQUOTED_LITERAL:
-
                 query_parts.append(op_token.value)
 
                 for op_token in token_iter:
@@ -620,13 +629,6 @@ def _parse_kql_expression(
 
             result = MultiMatchQuery(query=" ".join(query_parts), lenient=True)
             token = op_token
-    elif token.type == KQLTokenType.QUOTED_LITERAL:
-        result = MultiMatchQuery(
-            type=MultiMatchQueryType.PHRASE,
-            query=token.value,
-            lenient=True,
-        )
-        token = next(token_iter)
     elif token.type == KQLTokenType.LPAR:
         result, token = _parse_kql_or_query(
             token_iter,
