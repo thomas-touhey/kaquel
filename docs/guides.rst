@@ -7,5 +7,4 @@ This section consists of multiple guides for solving specific problems.
     :maxdepth: 2
 
     guides/install
-    guides/parse
     guides/report

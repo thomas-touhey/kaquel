@@ -85,7 +85,8 @@ ignore = [
     "W503",   # Line breaks are before binary operators, not after
 ]
 per-file-ignores = [
-    "tests/*:S101"
+    "tests/*:S101",
+    "docs/*:D100"
 ]
 rst-roles = [
   "py:class",

@@ -1,9 +1,42 @@
-Reporting a vulnerability or issue
-==================================
+.. _issue-reporting-guide:
 
-If you have identified that Kaquel does not work properly, introduces a
-security vulnerability, or would like to suggest a feature or evolution,
-there are different procedures depending on the issue.
+Reporting a bug or vulnerability
+================================
+
+If you have identified that the module does not work properly, this guide is
+here to help you identify the steps in reporting the issue properly for it
+to be fixed, or in some cases, at least publicly documented.
+
+Writing a bug or vulnerability report
+-------------------------------------
+
+The report MUST include the following information:
+
+* System and system version on which the issue occurs; e.g. Debian 14,
+  Ubuntu 22.04 LTS, Windows 11 Pro, ...
+* Module version (e.g. 0.1, 1.2, ...).
+
+Then, you must indicate the steps to reproduce the issue, including a
+`minimal, reproducible example`_ using the library.
+
+It is important that you respect the exact order in which you execute every
+action, since this may be the source of the issue.
+
+Sending your bug or vulnerability report
+----------------------------------------
+
+If your issue has security implications, e.g. if it allows a malicious
+device to access the host and/or execute arbitrary code without authorisation,
+please send an e-mail to Thomas Touhey at <thomas+kaquel@touhey.fr>.
+
+.. note::
+
+    Please only use this e-mail address if there is security implications
+    to your demand. If you are not sure if your issue qualifies or not,
+    send it anyway; use your best judgment.
+
+For all other issues, you can create an issue on the `issue tracker at
+Gitlab`_.
 
 .. warning::
 
@@ -18,7 +51,7 @@ there are different procedures depending on the issue.
 
 .. warning::
 
-    For any type of issue, due to the fact that Kaquel is free software
+    For any type of issue, due to the fact that this project is free software
     maintained by people on their free time, there is no guarantee of any
     delay, or even of a response or that the issue won't be closed due to
     lack of availability on the maintainers' part.
@@ -26,33 +59,7 @@ there are different procedures depending on the issue.
     Note however that this warning is worst case scenario, and hopefully,
     it won't come to that for any correctly reported issue.
 
-Reporting a vulnerability
--------------------------
-
-If your issue has security implications, e.g. if it allows a malicious
-device to access the host and/or execute arbitrary code without authorisation,
-please send an e-mail to Thomas Touhey, the maintainer of Kaquel,
-at <thomas+kaquel@touhey.fr>.
-
-.. note::
-
-    Please only use this e-mail address if there is security implications
-    to your demand. If you are not sure if your issue qualifies or not,
-    send it anyway; use your best judgment.
-
-.. _report-other-issues:
-
-Reporting any other issue or evolution request
-----------------------------------------------
-
-For all other issues, you can create an issue on the `issue tracker at
-Gitlab`_.
-
-If you are effectively reporting a bug in your issue, please include the
-following elements:
-
-* Kaquel version (e.g. 0.1, 1.2, ...).
-* **Steps to reproduce the issue**, on both the host and any device that
-  was implicated in the operation. (The order is important!)
-
-.. _Issue tracker at Gitlab: https://gitlab.com/kaquel/kaquel/-/issues
+.. _Issue tracker at Gitlab:
+    https://gitlab.com/kaquel/kaquel/-/issues
+.. _Minimal, reproducible example:
+    https://stackoverflow.com/help/minimal-reproducible-example
