@@ -232,6 +232,16 @@ from kaquel.query import (
             ],
         ),
         (
+            "a:{b}",
+            [
+                (TokenType.UNQUOTED_LITERAL, "a"),
+                (TokenType.COLON, None),
+                (TokenType.LBRACE, None),
+                (TokenType.UNQUOTED_LITERAL, "b"),
+                (TokenType.RBRACE, None),
+            ],
+        ),
+        (
             'user:{ first: "Alice" and last: "White" }',
             [
                 (TokenType.UNQUOTED_LITERAL, "user"),
@@ -562,6 +572,14 @@ def test_parse_invalid_token() -> None:
             NestedQuery(
                 path="hello",
                 query=MatchPhraseQuery(field="hello.world", query="yes"),
+                score_mode=NestedScoreMode.NONE,
+            ),
+        ),
+        (
+            "a:{b}",
+            NestedQuery(
+                path="a",
+                query=MultiMatchQuery(query="b", lenient=True),
                 score_mode=NestedScoreMode.NONE,
             ),
         ),

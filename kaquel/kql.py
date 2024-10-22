@@ -65,7 +65,7 @@ __all__ = ["parse_kql", "render_as_kql"]
 _KQL_TOKEN_PATTERN = re.compile(
     r"(>=?|<=?|:|\(|\)|{|})"
     + r'|"((?:.*?[^\\](?:\\\\)*|))"'  # Quoted literal.
-    + '|((?:[^\\\\:()<>"\\s]|\\\\.)+)',  # Unquoted literal.
+    + '|((?:[^\\\\:()<>"{}\\s]|\\\\.)+)',  # Unquoted literal.
     re.MULTILINE,
 )
 """Pattern for reading the next token."""
