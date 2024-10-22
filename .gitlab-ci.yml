@@ -6,6 +6,8 @@ stages:
 
 pre-commit:
     stage: lint
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     image: python:3.9
     before_script:
         - pip install poetry==1.8.3
@@ -15,6 +17,13 @@ pre-commit:
 
 build docs:
     stage: build
+    rules:
+        - if: $CI_COMMIT_TAG
+        - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+          changes:
+          - "docs/**/*"
+          - "kaquel/**/*"
+          - "poetry.lock"
     image: python:3.9
     before_script:
         - pip install poetry==1.8.1
@@ -27,10 +36,15 @@ build docs:
 
 run tests:
     stage: test
-    image: python:3.9
     rules:
+        - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+          changes:
+          - "kaquel/**/*"
+          - "tests/**/*"
+          - "poetry.lock"
         - if: $CI_COMMIT_BRANCH == "develop"
-          when: always
+        - if: $CI_COMMIT_TAG
+    image: python:3.9
     before_script:
         - pip install poetry==1.8.3
         - poetry install
@@ -42,7 +56,6 @@ publish docs:
     stage: publish
     rules:
         - if: $CI_COMMIT_TAG
-          when: always
     image: debian:bookworm-slim
     before_script:
         - apt-get update -y
@@ -61,7 +74,6 @@ publish package:
     stage: publish
     rules:
         - if: $CI_COMMIT_TAG
-          when: always
     image: python:3.9
     before_script:
         - pip install poetry==1.8.3
