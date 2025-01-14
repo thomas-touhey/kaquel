@@ -145,3 +145,26 @@ def normalize_boolean_query_minimum_should_match(
 def test_query_rendering(query: Query, expected: dict) -> None:
     """Test query rendering as a dictionary."""
     assert query.render() == expected
+
+
+def test_query_hashing() -> None:
+    """Check that query hashing works correctly."""
+    from collections import defaultdict
+
+    from kaquel.query import MatchQuery, Query
+
+    class SubMatchQuery(MatchQuery):
+        pass
+
+    d: defaultdict[Query | None, list[str]] = defaultdict(list)
+    d[MatchQuery(field="a", query="b")].append("1")
+    d[MatchQuery(field="a", query="c")].append("2")
+    d[None].append("3")
+    d[MatchQuery(field="a", query="b")].append("4")
+    d[SubMatchQuery(field="a", query="c")].append("5")
+
+    assert d == {
+        MatchQuery(field="a", query="b"): ["1", "4"],
+        MatchQuery(field="a", query="c"): ["2", "5"],
+        None: ["3"],
+    }

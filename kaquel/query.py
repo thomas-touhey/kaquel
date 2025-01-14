@@ -50,6 +50,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic_core import to_json
 
 
 class Query(BaseModel, ABC):
@@ -57,6 +58,12 @@ class Query(BaseModel, ABC):
 
     model_config = ConfigDict(extra="forbid")
     """Model configuration."""
+
+    def __eq__(self, other: Any, /) -> bool:
+        return hash(self) == hash(other) if isinstance(other, Query) else False
+
+    def __hash__(self, /) -> int:
+        return hash(to_json(self.render()))
 
     @abstractmethod
     def render(self, /) -> dict:
