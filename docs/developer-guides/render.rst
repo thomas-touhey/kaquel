@@ -7,8 +7,8 @@ Kaquel provides various utilities to render queries from :py:class:`Query`
 objects into different languages. In this section, we will use these utilities
 in example programs.
 
-Rendering queries as KQL
-------------------------
+Rendering queries from query DSN as KQL
+---------------------------------------
 
 .. py:currentmodule:: kaquel.kql
 
@@ -32,3 +32,21 @@ The output will be the following:
 .. code-block:: text
 
     a: b and c: "d"
+
+Rendering KQL queries
+---------------------
+
+.. py:currentmodule:: kaquel.kql.renderer
+
+If you represent your queries using a KQL abstract trees using elements
+from :py:mod:`kaquel.kql.lang`, you can use :py:func:`render_kql`.
+For example:
+
+.. literalinclude:: render_kql.py
+    :language: python
+
+The output will be the following:
+
+.. code-block:: text
+
+    hostname: example.org and ip: "198.51.100.104"

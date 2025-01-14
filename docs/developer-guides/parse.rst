@@ -7,8 +7,36 @@ Kaquel provides various utilities to parse queries into :py:class:`Query`
 objects that can be rendered. In this section, we will use these utilities
 in example programs.
 
-Parsing KQL queries
--------------------
+Parsing KQL queries as KQL AST
+------------------------------
+
+.. py:currentmodule:: kaquel.kql.parser
+
+In order to parse a KQL query into an abstract KQL tree, you must use the
+:py:func:`parse_kql` function.
+
+For example, if you make a program that shows the abstract tree behind a
+KQL query, you can do the following:
+
+.. literalinclude:: parse_kql_only.py
+    :language: python
+
+For example, when executing the program with the following input:
+
+.. code-block:: text
+
+    http.status: 500 AND NOT http.request.method: GET
+
+The output will resemble the following:
+
+.. code-block:: text
+
+    And(queries=(Match(field='http.status', condition=ValueMatch(value='500')),
+    Not(query=Match(field='http.request.method',
+    condition=ValueMatch(value='GET')))))
+
+Parsing KQL queries as query DSN
+--------------------------------
 
 .. py:currentmodule:: kaquel.kql
 
@@ -32,8 +60,8 @@ The output will be the following:
 
     {"bool": {"must_not": {"match": {"http.request.method": "GET"}}}}
 
-Parsing Lucene queries
-----------------------
+Parsing Lucene queries as query DSN
+-----------------------------------
 
 .. py:currentmodule:: kaquel.lucene
 
