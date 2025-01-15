@@ -9,3 +9,4 @@ targeted towards developers using the component.
 
     developer-guides/parse
     developer-guides/render
+    developer-guides/optimize-kql

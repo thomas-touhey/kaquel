@@ -112,4 +112,4 @@ from kaquel.kql.renderer import render_kql
 )
 def test_render(query: Query, expected: str) -> None:
     """Check that rendering works correctly."""
-    assert render_kql(query) == expected
+    assert render_kql(query, optimize=False) == expected

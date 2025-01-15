@@ -71,16 +71,18 @@ def render_as_kql(
     /,
     *,
     filters_in_must_clause: bool = False,
+    optimize: bool = True,
 ) -> str:
     """Render an Elasticsearch query as KQL.
 
     :param query: Query to render as KQL.
     :param filters_in_must_clause: Whether filters should be retrieved from
         the 'must' clause rather than 'filter' clause for boolean queries.
+    :param optimize: Whether to optimize the query first.
     :return: Rendered query as KQL.
     :raises RenderError: An error has occurred while rendering the query;
         usually, the query makes use of a feature that cannot be translated
         into KQL.
     """
     kql_query = _to_kql(query, filters_in_must_clause=filters_in_must_clause)
-    return _render_kql(kql_query)
+    return _render_kql(kql_query, optimize=optimize)

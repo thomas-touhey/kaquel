@@ -57,6 +57,7 @@ from .lang import (
     ValueOr,
     ValuePhraseMatch,
 )
+from .optimizer import optimize_kql as _optimize_kql
 
 
 _KQL_TO_ESCAPE_PATTERN = re.compile(r'([\\\\():<>"])')
@@ -239,10 +240,13 @@ def _render_recursive(
     raise NotImplementedError()  # pragma: no cover
 
 
-def render_kql(query: Query, /) -> str:
+def render_kql(query: Query, /, *, optimize: bool = False) -> str:
     """Render the KQL query.
 
     :param query: Query to render.
+    :param optimize: Whether to optimize the request before rendering.
     :return: Rendered query.
     """
+    if optimize:
+        query = _optimize_kql(query)
     return _render_recursive(query)

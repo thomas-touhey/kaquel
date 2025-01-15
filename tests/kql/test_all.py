@@ -527,7 +527,7 @@ def test_parser_with_must_clause(raw: str, query: Query) -> None:
 )
 def test_render(query: Query, expected: str) -> None:
     """Test that KQL query rendering works correctly."""
-    assert render_as_kql(query) == expected
+    assert render_as_kql(query, optimize=False) == expected
 
 
 @pytest.mark.parametrize(
