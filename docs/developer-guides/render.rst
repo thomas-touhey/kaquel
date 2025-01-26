@@ -1,7 +1,7 @@
 Rendering queries
 =================
 
-.. py:currentmodule:: kaquel.query
+.. py:currentmodule:: kaquel.es_query.lang
 
 Kaquel provides various utilities to render queries from :py:class:`Query`
 objects into different languages. In this section, we will use these utilities

@@ -26,7 +26,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-C license and that you accept its terms.
 # *****************************************************************************
-"""Tests for the ElasticSearch query related utilities."""
+"""Tests for the ElasticSearch query parser."""
 
 from __future__ import annotations
 
@@ -34,8 +34,7 @@ from typing import Any
 
 import pytest
 
-from kaquel.es_query import InvalidQuery, parse_es_query
-from kaquel.query import (
+from kaquel.es_query.lang import (
     BooleanQuery,
     ExistsQuery,
     MatchAllQuery,
@@ -47,6 +46,7 @@ from kaquel.query import (
     QueryStringQuery,
     RangeQuery,
 )
+from kaquel.es_query.parser import InvalidQuery, parse_es_query
 
 
 @pytest.mark.parametrize(

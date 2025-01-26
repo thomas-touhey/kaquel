@@ -33,8 +33,9 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from .errors import Error
-from .query import (
+from kaquel.errors import Error
+
+from .lang import (
     BooleanQuery,
     ExistsQuery,
     MatchAllQuery,

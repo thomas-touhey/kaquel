@@ -26,32 +26,6 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL-C license and that you accept its terms.
 # *****************************************************************************
-"""Tests for the Lucene query language related utilities."""
+"""ES Query DSN language handling."""
 
 from __future__ import annotations
-
-import pytest
-
-from kaquel.es_query.lang import MatchAllQuery, Query, QueryStringQuery
-from kaquel.lucene import parse_lucene
-
-
-@pytest.mark.parametrize(
-    "query,expected_result",
-    (
-        (
-            "  ",
-            MatchAllQuery(),
-        ),
-        (
-            "status:[400 TO 499] AND (extension:php OR extension:html)",
-            QueryStringQuery(
-                query="status:[400 TO 499] AND (extension:php OR "
-                + "extension:html)",
-            ),
-        ),
-    ),
-)
-def test_parse_lucene(query: str, expected_result: Query) -> None:
-    """Test Lucene query parsing output."""
-    assert parse_lucene(query) == expected_result

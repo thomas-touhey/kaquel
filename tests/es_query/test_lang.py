@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import pytest
 
-from kaquel.query import (
+from kaquel.es_query.lang import (
     BooleanQuery,
     ExistsQuery,
     MatchAllQuery,
@@ -151,7 +151,7 @@ def test_query_hashing() -> None:
     """Check that query hashing works correctly."""
     from collections import defaultdict
 
-    from kaquel.query import MatchQuery, Query
+    from kaquel.es_query.lang import MatchQuery, Query
 
     class SubMatchQuery(MatchQuery):
         pass

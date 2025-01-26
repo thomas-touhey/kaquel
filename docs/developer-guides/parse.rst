@@ -1,7 +1,7 @@
 Parsing queries
 ===============
 
-.. py:currentmodule:: kaquel.query
+.. py:currentmodule:: kaquel.es_query.lang
 
 Kaquel provides various utilities to parse queries into :py:class:`Query`
 objects that can be rendered. In this section, we will use these utilities

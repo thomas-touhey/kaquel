@@ -35,7 +35,7 @@ from itertools import chain
 from pydantic import BaseModel, ConfigDict
 
 from kaquel.errors import RenderError
-from kaquel.query import (
+from kaquel.es_query.lang import (
     BooleanQuery,
     ExistsQuery,
     Query,

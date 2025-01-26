@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
-from kaquel.query import (
+from kaquel.es_query.lang import (
     BooleanQuery,
     ExistsQuery,
     MatchAllQuery,

@@ -32,6 +32,12 @@ from __future__ import annotations
 
 import pytest
 
+from kaquel.es_query.lang import (
+    BooleanQuery,
+    MatchQuery,
+    MultiMatchQuery,
+    Query,
+)
 from kaquel.kql.lang import (
     KQLAnd,
     KQLMatch,
@@ -45,7 +51,6 @@ from kaquel.kql.lang import (
     KQLValueOr,
 )
 from kaquel.kql.to_query import from_kql
-from kaquel.query import BooleanQuery, MatchQuery, MultiMatchQuery, Query
 
 
 @pytest.mark.parametrize(

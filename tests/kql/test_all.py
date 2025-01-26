@@ -35,8 +35,7 @@ from datetime import date
 import pytest
 
 from kaquel.errors import RenderError
-from kaquel.kql import parse_kql, render_as_kql
-from kaquel.query import (
+from kaquel.es_query.lang import (
     BooleanQuery,
     ExistsQuery,
     MatchAllQuery,
@@ -49,6 +48,7 @@ from kaquel.query import (
     Query,
     RangeQuery,
 )
+from kaquel.kql import parse_kql, render_as_kql
 
 
 @pytest.mark.parametrize(

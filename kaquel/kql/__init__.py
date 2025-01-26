@@ -30,7 +30,7 @@
 
 from __future__ import annotations
 
-from kaquel.query import Query
+from kaquel.es_query.lang import Query
 
 from .from_query import to_kql as _to_kql
 from .parser import parse_kql as _parse_kql

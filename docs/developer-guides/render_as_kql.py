@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sys import stdin
 
-from kaquel.es_query import parse_es_query
+from kaquel.es_query.parser import parse_es_query
 from kaquel.kql import render_as_kql
 
 

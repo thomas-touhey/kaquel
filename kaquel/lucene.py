@@ -30,7 +30,7 @@
 
 from __future__ import annotations
 
-from .query import MatchAllQuery, Query, QueryStringQuery
+from .es_query.lang import MatchAllQuery, Query, QueryStringQuery
 
 
 def parse_lucene(kuery: str, /) -> Query:
