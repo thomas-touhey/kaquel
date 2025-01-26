@@ -33,24 +33,24 @@ from __future__ import annotations
 import pytest
 
 from kaquel.kql.lang import (
-    All,
-    And,
-    Exist,
-    Gt,
-    Gte,
-    Lt,
-    Lte,
-    Match,
-    MultiMatch,
-    Nested,
-    Not,
-    Or,
-    Query,
-    ValueAll,
-    ValueAnd,
-    ValueMatch,
-    ValueNot,
-    ValueOr,
+    KQLAll,
+    KQLAnd,
+    KQLExist,
+    KQLGt,
+    KQLGte,
+    KQLLt,
+    KQLLte,
+    KQLMatch,
+    KQLMultiMatch,
+    KQLNested,
+    KQLNot,
+    KQLOr,
+    KQLQuery,
+    KQLValueAll,
+    KQLValueAnd,
+    KQLValueMatch,
+    KQLValueNot,
+    KQLValueOr,
 )
 from kaquel.kql.optimizer import optimize_kql
 
@@ -59,436 +59,492 @@ from kaquel.kql.optimizer import optimize_kql
     "original,optimized",
     (
         (
-            Not(
-                query=Not(
-                    query=Match(field="a", condition=ValueMatch(value="b")),
+            KQLNot(
+                query=KQLNot(
+                    query=KQLMatch(
+                        field="a",
+                        condition=KQLValueMatch(value="b"),
+                    ),
                 ),
             ),
-            Match(field="a", condition=ValueMatch(value="b")),
+            KQLMatch(field="a", condition=KQLValueMatch(value="b")),
         ),
         (
-            Not(query=Match(field="a", condition=ValueMatch(value="b"))),
-            Not(
-                query=Match(
+            KQLNot(
+                query=KQLMatch(field="a", condition=KQLValueMatch(value="b")),
+            ),
+            KQLNot(
+                query=KQLMatch(
                     field="a",
-                    condition=ValueMatch(value="b"),
+                    condition=KQLValueMatch(value="b"),
                 ),
             ),
         ),
         (
-            Not(
-                query=Match(
+            KQLNot(
+                query=KQLMatch(
                     field="a",
-                    condition=ValueNot(condition=ValueMatch(value="b")),
+                    condition=KQLValueNot(condition=KQLValueMatch(value="b")),
                 ),
             ),
-            Match(field="a", condition=ValueMatch(value="b")),
+            KQLMatch(field="a", condition=KQLValueMatch(value="b")),
         ),
         (
-            Not(query=MultiMatch(condition=ValueMatch(value="b"))),
-            Not(query=MultiMatch(condition=ValueMatch(value="b"))),
+            KQLNot(query=KQLMultiMatch(condition=KQLValueMatch(value="b"))),
+            KQLNot(query=KQLMultiMatch(condition=KQLValueMatch(value="b"))),
         ),
         (
-            Not(
-                query=MultiMatch(
-                    condition=ValueNot(condition=ValueMatch(value="b")),
+            KQLNot(
+                query=KQLMultiMatch(
+                    condition=KQLValueNot(condition=KQLValueMatch(value="b")),
                 ),
             ),
-            MultiMatch(condition=ValueMatch(value="b")),
+            KQLMultiMatch(condition=KQLValueMatch(value="b")),
         ),
         (  # 5
-            Not(
-                query=And(
+            KQLNot(
+                query=KQLAnd(
                     queries=[
-                        Match(field="a", condition=ValueMatch(value="a")),
-                        Match(field="b", condition=ValueMatch(value="b")),
+                        KQLMatch(
+                            field="a",
+                            condition=KQLValueMatch(value="a"),
+                        ),
+                        KQLMatch(
+                            field="b",
+                            condition=KQLValueMatch(value="b"),
+                        ),
                     ],
                 ),
             ),
-            Not(
-                query=And(
+            KQLNot(
+                query=KQLAnd(
                     queries=[
-                        Match(field="a", condition=ValueMatch(value="a")),
-                        Match(field="b", condition=ValueMatch(value="b")),
-                    ],
-                ),
-            ),
-        ),
-        (
-            Not(
-                query=Or(
-                    queries=[
-                        Match(field="a", condition=ValueMatch(value="a")),
-                        Match(field="b", condition=ValueMatch(value="b")),
-                    ],
-                ),
-            ),
-            Not(
-                query=Or(
-                    queries=[
-                        Match(field="a", condition=ValueMatch(value="a")),
-                        Match(field="b", condition=ValueMatch(value="b")),
+                        KQLMatch(
+                            field="a",
+                            condition=KQLValueMatch(value="a"),
+                        ),
+                        KQLMatch(
+                            field="b",
+                            condition=KQLValueMatch(value="b"),
+                        ),
                     ],
                 ),
             ),
         ),
         (
-            And(
+            KQLNot(
+                query=KQLOr(
+                    queries=[
+                        KQLMatch(
+                            field="a",
+                            condition=KQLValueMatch(value="a"),
+                        ),
+                        KQLMatch(
+                            field="b",
+                            condition=KQLValueMatch(value="b"),
+                        ),
+                    ],
+                ),
+            ),
+            KQLNot(
+                query=KQLOr(
+                    queries=[
+                        KQLMatch(
+                            field="a",
+                            condition=KQLValueMatch(value="a"),
+                        ),
+                        KQLMatch(
+                            field="b",
+                            condition=KQLValueMatch(value="b"),
+                        ),
+                    ],
+                ),
+            ),
+        ),
+        (
+            KQLAnd(
                 queries=[
-                    Not(query=Gt(field="a", value=0)),
-                    Not(query=Gte(field="b", value=1)),
-                    Not(query=Lt(field="c", value=2)),
-                    Not(query=Lte(field="d", value=3)),
+                    KQLNot(query=KQLGt(field="a", value=0)),
+                    KQLNot(query=KQLGte(field="b", value=1)),
+                    KQLNot(query=KQLLt(field="c", value=2)),
+                    KQLNot(query=KQLLte(field="d", value=3)),
                 ],
             ),
-            And(
+            KQLAnd(
                 queries=[
-                    Lte(field="a", value=0),
-                    Lt(field="b", value=1),
-                    Gte(field="c", value=2),
-                    Gt(field="d", value=3),
+                    KQLLte(field="a", value=0),
+                    KQLLt(field="b", value=1),
+                    KQLGte(field="c", value=2),
+                    KQLGt(field="d", value=3),
                 ],
             ),
         ),
         (
-            Not(query=All()),
-            Not(query=All()),
+            KQLNot(query=KQLAll()),
+            KQLNot(query=KQLAll()),
         ),
         # Query AND optimizations.
         (
-            And(queries=[Match(field="a", condition=ValueMatch(value="a"))]),
-            Match(field="a", condition=ValueMatch(value="a")),
+            KQLAnd(
+                queries=[
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
+                ],
+            ),
+            KQLMatch(field="a", condition=KQLValueMatch(value="a")),
         ),
         (
-            And(
+            KQLAnd(
                 queries=[
-                    And(
+                    KQLAnd(
                         queries=[
-                            Match(field="a", condition=ValueMatch(value="a")),
-                            Match(field="b", condition=ValueMatch(value="b")),
+                            KQLMatch(
+                                field="a",
+                                condition=KQLValueMatch(value="a"),
+                            ),
+                            KQLMatch(
+                                field="b",
+                                condition=KQLValueMatch(value="b"),
+                            ),
                         ],
                     ),
-                    Match(field="c", condition=ValueMatch(value="c")),
+                    KQLMatch(field="c", condition=KQLValueMatch(value="c")),
                 ],
             ),
-            And(
+            KQLAnd(
                 queries=[
-                    Match(field="a", condition=ValueMatch(value="a")),
-                    Match(field="b", condition=ValueMatch(value="b")),
-                    Match(field="c", condition=ValueMatch(value="c")),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
+                    KQLMatch(field="b", condition=KQLValueMatch(value="b")),
+                    KQLMatch(field="c", condition=KQLValueMatch(value="c")),
                 ],
             ),
         ),
         (
-            And(
+            KQLAnd(
                 queries=[
-                    Match(field="a", condition=ValueMatch(value="a")),
-                    Match(
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
+                    KQLMatch(
                         field="a",
-                        condition=ValueAnd(
+                        condition=KQLValueAnd(
                             conditions=[
-                                ValueMatch(value="b"),
-                                ValueMatch(value="c"),
+                                KQLValueMatch(value="b"),
+                                KQLValueMatch(value="c"),
                             ],
                         ),
                     ),
                 ],
             ),
-            Match(
+            KQLMatch(
                 field="a",
-                condition=ValueAnd(
+                condition=KQLValueAnd(
                     conditions=[
-                        ValueMatch(value="a"),
-                        ValueMatch(value="b"),
-                        ValueMatch(value="c"),
+                        KQLValueMatch(value="a"),
+                        KQLValueMatch(value="b"),
+                        KQLValueMatch(value="c"),
                     ],
                 ),
             ),
         ),
         (
-            And(
+            KQLAnd(
                 queries=[
-                    Match(field="a", condition=ValueMatch(value="a")),
-                    Gt(field="b", value=5),
-                    MultiMatch(condition=ValueMatch(value="c")),
-                    Match(field="a", condition=ValueMatch(value="b")),
-                    MultiMatch(condition=ValueMatch(value="d")),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
+                    KQLGt(field="b", value=5),
+                    KQLMultiMatch(condition=KQLValueMatch(value="c")),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="b")),
+                    KQLMultiMatch(condition=KQLValueMatch(value="d")),
                 ],
             ),
-            And(
+            KQLAnd(
                 queries=[
-                    Match(
+                    KQLMatch(
                         field="a",
-                        condition=ValueAnd(
+                        condition=KQLValueAnd(
                             conditions=[
-                                ValueMatch(value="a"),
-                                ValueMatch(value="b"),
+                                KQLValueMatch(value="a"),
+                                KQLValueMatch(value="b"),
                             ],
                         ),
                     ),
-                    MultiMatch(
-                        condition=ValueAnd(
+                    KQLMultiMatch(
+                        condition=KQLValueAnd(
                             conditions=[
-                                ValueMatch(value="c"),
-                                ValueMatch(value="d"),
+                                KQLValueMatch(value="c"),
+                                KQLValueMatch(value="d"),
                             ],
                         ),
                     ),
-                    Gt(field="b", value=5),
+                    KQLGt(field="b", value=5),
                 ],
             ),
         ),
         (
-            And(
+            KQLAnd(
                 queries=[
-                    Exist(field="a"),
-                    Exist(field="b"),
-                    Match(field="a", condition=ValueMatch(value="a")),
-                    Match(field="c", condition=ValueMatch(value="c")),
+                    KQLExist(field="a"),
+                    KQLExist(field="b"),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
+                    KQLMatch(field="c", condition=KQLValueMatch(value="c")),
                 ],
             ),
-            And(
+            KQLAnd(
                 queries=[
-                    Match(field="a", condition=ValueMatch(value="a")),
-                    Exist(field="b"),
-                    Match(field="c", condition=ValueMatch(value="c")),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
+                    KQLExist(field="b"),
+                    KQLMatch(field="c", condition=KQLValueMatch(value="c")),
                 ],
             ),
         ),
         (
-            And(
+            KQLAnd(
                 queries=[
-                    All(),
-                    Match(field="a", condition=ValueMatch(value="a")),
+                    KQLAll(),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
                 ],
             ),
-            Match(field="a", condition=ValueMatch(value="a")),
+            KQLMatch(field="a", condition=KQLValueMatch(value="a")),
         ),
-        (And(queries=[All(), All()]), All()),
+        (KQLAnd(queries=[KQLAll(), KQLAll()]), KQLAll()),
         (
-            And(queries=[Match(field="a", condition=ValueAll())]),
-            Exist(field="a"),
+            KQLAnd(queries=[KQLMatch(field="a", condition=KQLValueAll())]),
+            KQLExist(field="a"),
         ),
         (
-            And(
+            KQLAnd(
                 queries=[
-                    Match(field="a", condition=ValueMatch(value="b")),
-                    Match(field="a", condition=ValueAll()),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="b")),
+                    KQLMatch(field="a", condition=KQLValueAll()),
                 ],
             ),
-            Match(field="a", condition=ValueMatch(value="b")),
+            KQLMatch(field="a", condition=KQLValueMatch(value="b")),
         ),
         # Query OR optimizations.
         (
-            Or(queries=[Match(field="a", condition=ValueMatch(value="a"))]),
-            Match(field="a", condition=ValueMatch(value="a")),
+            KQLOr(
+                queries=[
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
+                ],
+            ),
+            KQLMatch(field="a", condition=KQLValueMatch(value="a")),
         ),
         (
-            Or(
+            KQLOr(
                 queries=[
-                    Or(
+                    KQLOr(
                         queries=[
-                            Match(field="a", condition=ValueMatch(value="a")),
-                            Match(field="b", condition=ValueMatch(value="b")),
+                            KQLMatch(
+                                field="a",
+                                condition=KQLValueMatch(value="a"),
+                            ),
+                            KQLMatch(
+                                field="b",
+                                condition=KQLValueMatch(value="b"),
+                            ),
                         ],
                     ),
-                    Match(field="c", condition=ValueMatch(value="c")),
+                    KQLMatch(field="c", condition=KQLValueMatch(value="c")),
                 ],
             ),
-            Or(
+            KQLOr(
                 queries=[
-                    Match(field="a", condition=ValueMatch(value="a")),
-                    Match(field="b", condition=ValueMatch(value="b")),
-                    Match(field="c", condition=ValueMatch(value="c")),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
+                    KQLMatch(field="b", condition=KQLValueMatch(value="b")),
+                    KQLMatch(field="c", condition=KQLValueMatch(value="c")),
                 ],
             ),
         ),
         (
-            Or(
+            KQLOr(
                 queries=[
-                    Match(field="a", condition=ValueMatch(value="a")),
-                    Match(
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
+                    KQLMatch(
                         field="a",
-                        condition=ValueOr(
+                        condition=KQLValueOr(
                             conditions=[
-                                ValueMatch(value="b"),
-                                ValueMatch(value="c"),
+                                KQLValueMatch(value="b"),
+                                KQLValueMatch(value="c"),
                             ],
                         ),
                     ),
                 ],
             ),
-            Match(
+            KQLMatch(
                 field="a",
-                condition=ValueOr(
+                condition=KQLValueOr(
                     conditions=[
-                        ValueMatch(value="a"),
-                        ValueMatch(value="b"),
-                        ValueMatch(value="c"),
+                        KQLValueMatch(value="a"),
+                        KQLValueMatch(value="b"),
+                        KQLValueMatch(value="c"),
                     ],
                 ),
             ),
         ),
         (
-            Or(
+            KQLOr(
                 queries=[
-                    Match(field="a", condition=ValueMatch(value="a")),
-                    Gt(field="b", value=5),
-                    MultiMatch(condition=ValueMatch(value="c")),
-                    Match(field="a", condition=ValueMatch(value="b")),
-                    MultiMatch(condition=ValueMatch(value="d")),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
+                    KQLGt(field="b", value=5),
+                    KQLMultiMatch(condition=KQLValueMatch(value="c")),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="b")),
+                    KQLMultiMatch(condition=KQLValueMatch(value="d")),
                 ],
             ),
-            Or(
+            KQLOr(
                 queries=[
-                    Match(
+                    KQLMatch(
                         field="a",
-                        condition=ValueOr(
+                        condition=KQLValueOr(
                             conditions=[
-                                ValueMatch(value="a"),
-                                ValueMatch(value="b"),
+                                KQLValueMatch(value="a"),
+                                KQLValueMatch(value="b"),
                             ],
                         ),
                     ),
-                    MultiMatch(
-                        condition=ValueOr(
+                    KQLMultiMatch(
+                        condition=KQLValueOr(
                             conditions=[
-                                ValueMatch(value="c"),
-                                ValueMatch(value="d"),
+                                KQLValueMatch(value="c"),
+                                KQLValueMatch(value="d"),
                             ],
                         ),
                     ),
-                    Gt(field="b", value=5),
+                    KQLGt(field="b", value=5),
                 ],
             ),
         ),
         (
-            Or(
+            KQLOr(
                 queries=[
-                    Exist(field="a"),
-                    Exist(field="b"),
-                    Match(field="a", condition=ValueMatch(value="a")),
-                    Match(field="c", condition=ValueMatch(value="c")),
+                    KQLExist(field="a"),
+                    KQLExist(field="b"),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
+                    KQLMatch(field="c", condition=KQLValueMatch(value="c")),
                 ],
             ),
-            Or(
+            KQLOr(
                 queries=[
-                    Exist(field="a"),
-                    Exist(field="b"),
-                    Match(field="c", condition=ValueMatch(value="c")),
+                    KQLExist(field="a"),
+                    KQLExist(field="b"),
+                    KQLMatch(field="c", condition=KQLValueMatch(value="c")),
                 ],
             ),
         ),
         (
-            Or(
+            KQLOr(
                 queries=[
-                    All(),
-                    Match(field="a", condition=ValueMatch(value="a")),
+                    KQLAll(),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="a")),
                 ],
             ),
-            All(),
+            KQLAll(),
         ),
         (
-            Or(
+            KQLOr(
                 queries=[
-                    MultiMatch(condition=ValueAll()),
-                    All(),
+                    KQLMultiMatch(condition=KQLValueAll()),
+                    KQLAll(),
                 ],
             ),
-            All(),
+            KQLAll(),
         ),
         (
-            Or(
+            KQLOr(
                 queries=[
-                    Match(field="a", condition=ValueMatch(value="b")),
-                    Match(field="a", condition=ValueAll()),
+                    KQLMatch(field="a", condition=KQLValueMatch(value="b")),
+                    KQLMatch(field="a", condition=KQLValueAll()),
                 ],
             ),
-            Exist(field="a"),
+            KQLExist(field="a"),
         ),
         # Other tests.
         (
-            Not(
-                query=Nested(
+            KQLNot(
+                query=KQLNested(
                     path="person",
-                    query=MultiMatch(condition=ValueMatch(value="Jennifer")),
+                    query=KQLMultiMatch(
+                        condition=KQLValueMatch(value="Jennifer"),
+                    ),
                 ),
             ),
-            Nested(
+            KQLNested(
                 path="person",
-                query=Not(
-                    query=MultiMatch(condition=ValueMatch(value="Jennifer")),
+                query=KQLNot(
+                    query=KQLMultiMatch(
+                        condition=KQLValueMatch(value="Jennifer"),
+                    ),
                 ),
             ),
         ),
         (
-            Not(
-                query=Or(
+            KQLNot(
+                query=KQLOr(
                     queries=[
-                        Match(field="a", condition=ValueMatch(value="b")),
-                        Match(
+                        KQLMatch(
+                            field="a",
+                            condition=KQLValueMatch(value="b"),
+                        ),
+                        KQLMatch(
                             field="b",
-                            condition=ValueNot(
-                                condition=ValueMatch(value="b"),
+                            condition=KQLValueNot(
+                                condition=KQLValueMatch(value="b"),
                             ),
                         ),
                     ],
                 ),
             ),
-            And(
+            KQLAnd(
                 queries=[
-                    Not(
-                        query=Match(
+                    KQLNot(
+                        query=KQLMatch(
                             field="a",
-                            condition=ValueMatch(value="b"),
+                            condition=KQLValueMatch(value="b"),
                         ),
                     ),
-                    Match(
+                    KQLMatch(
                         field="b",
-                        condition=ValueMatch(value="b"),
+                        condition=KQLValueMatch(value="b"),
                     ),
                 ],
             ),
         ),
         (
-            Match(
+            KQLMatch(
                 field="name",
-                condition=ValueAnd(
+                condition=KQLValueAnd(
                     conditions=[
-                        ValueNot(condition=ValueMatch(value="John")),
-                        ValueNot(condition=ValueMatch(value="Adam")),
+                        KQLValueNot(condition=KQLValueMatch(value="John")),
+                        KQLValueNot(condition=KQLValueMatch(value="Adam")),
                     ],
                 ),
             ),
-            Not(
-                query=Match(
+            KQLNot(
+                query=KQLMatch(
                     field="name",
-                    condition=ValueOr(
+                    condition=KQLValueOr(
                         conditions=[
-                            ValueMatch(value="John"),
-                            ValueMatch(value="Adam"),
+                            KQLValueMatch(value="John"),
+                            KQLValueMatch(value="Adam"),
                         ],
                     ),
                 ),
             ),
         ),
         (
-            Match(
+            KQLMatch(
                 field="name",
-                condition=ValueOr(
+                condition=KQLValueOr(
                     conditions=[
-                        ValueNot(condition=ValueMatch(value="John")),
-                        ValueNot(condition=ValueMatch(value="Adam")),
+                        KQLValueNot(condition=KQLValueMatch(value="John")),
+                        KQLValueNot(condition=KQLValueMatch(value="Adam")),
                     ],
                 ),
             ),
-            Not(
-                query=Match(
+            KQLNot(
+                query=KQLMatch(
                     field="name",
-                    condition=ValueAnd(
+                    condition=KQLValueAnd(
                         conditions=[
-                            ValueMatch(value="John"),
-                            ValueMatch(value="Adam"),
+                            KQLValueMatch(value="John"),
+                            KQLValueMatch(value="Adam"),
                         ],
                     ),
                 ),
@@ -496,6 +552,6 @@ from kaquel.kql.optimizer import optimize_kql
         ),
     ),
 )
-def test_optimize(original: Query, optimized: Query) -> None:
+def test_optimize(original: KQLQuery, optimized: KQLQuery) -> None:
     """Check that optimizing requests work."""
     assert optimize_kql(original) == optimized

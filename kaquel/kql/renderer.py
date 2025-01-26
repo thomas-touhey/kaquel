@@ -37,25 +37,25 @@ from datetime import date
 import re
 
 from .lang import (
-    All,
-    And,
-    Exist,
-    Gt,
-    Gte,
-    Lt,
-    Lte,
-    Match,
-    MultiMatch,
-    Nested,
-    Not,
-    Or,
-    Query,
-    ValueAnd,
-    ValueCondition,
-    ValueMatch,
-    ValueNot,
-    ValueOr,
-    ValuePhraseMatch,
+    KQLAll,
+    KQLAnd,
+    KQLExist,
+    KQLGt,
+    KQLGte,
+    KQLLt,
+    KQLLte,
+    KQLMatch,
+    KQLMultiMatch,
+    KQLNested,
+    KQLNot,
+    KQLOr,
+    KQLQuery,
+    KQLValueAnd,
+    KQLValueCondition,
+    KQLValueMatch,
+    KQLValueNot,
+    KQLValueOr,
+    KQLValuePhraseMatch,
 )
 from .optimizer import optimize_kql as _optimize_kql
 
@@ -81,7 +81,7 @@ def _render_literal(literal: str | int | float | date, /) -> str:
 
 
 def _render_value_condition_recursive(
-    condition: ValueCondition,
+    condition: KQLValueCondition,
     /,
     *,
     in_and: bool = False,
@@ -96,7 +96,7 @@ def _render_value_condition_recursive(
     :param in_not: Whether we are in a NOT context.
     :return: Rendered query as KQL.
     """
-    if isinstance(condition, ValueAnd):
+    if isinstance(condition, KQLValueAnd):
         if len(condition.conditions) == 1:
             return _render_value_condition_recursive(
                 condition.conditions[0],
@@ -113,7 +113,7 @@ def _render_value_condition_recursive(
 
         return result
 
-    if isinstance(condition, ValueOr):
+    if isinstance(condition, KQLValueOr):
         if len(condition.conditions) == 1:
             return _render_value_condition_recursive(
                 condition.conditions[0],
@@ -130,24 +130,24 @@ def _render_value_condition_recursive(
 
         return result
 
-    if isinstance(condition, ValueNot):
+    if isinstance(condition, KQLValueNot):
         result = _render_value_condition_recursive(
             condition.condition,
             in_not=True,
         )
         return f"not {result}"
 
-    if isinstance(condition, ValueMatch):
+    if isinstance(condition, KQLValueMatch):
         return _render_literal(condition.value)
 
-    if isinstance(condition, ValuePhraseMatch):
+    if isinstance(condition, KQLValuePhraseMatch):
         return f'"{_render_literal(condition.value)}"'
 
     raise NotImplementedError()  # pragma: no cover
 
 
 def _render_recursive(
-    query: Query,
+    query: KQLQuery,
     /,
     *,
     in_and: bool = False,
@@ -162,14 +162,14 @@ def _render_recursive(
     :param in_not: Whether we are in a NOT context.
     :return: Rendered query as KQL.
     """
-    if isinstance(query, All):
+    if isinstance(query, KQLAll):
         return "*"
 
-    if isinstance(query, Nested):
+    if isinstance(query, KQLNested):
         result = _render_recursive(query.query)
         return f"{query.path}: {{ {result} }}"
 
-    if isinstance(query, And):
+    if isinstance(query, KQLAnd):
         if len(query.queries) == 1:
             return _render_recursive(
                 query.queries[0],
@@ -186,7 +186,7 @@ def _render_recursive(
 
         return result
 
-    if isinstance(query, Or):
+    if isinstance(query, KQLOr):
         if len(query.queries) == 1:
             return _render_recursive(
                 query.queries[0],
@@ -202,45 +202,45 @@ def _render_recursive(
 
         return result
 
-    if isinstance(query, Not):
+    if isinstance(query, KQLNot):
         result = _render_recursive(query.query, in_not=True)
         return f"not {result}"
 
-    if isinstance(query, Gt):
+    if isinstance(query, KQLGt):
         field = _render_literal(query.field)
         value = _render_literal(query.value)
         return f"{field} > {value}"
 
-    if isinstance(query, Gte):
+    if isinstance(query, KQLGte):
         field = _render_literal(query.field)
         value = _render_literal(query.value)
         return f"{field} >= {value}"
 
-    if isinstance(query, Lt):
+    if isinstance(query, KQLLt):
         field = _render_literal(query.field)
         value = _render_literal(query.value)
         return f"{field} < {value}"
 
-    if isinstance(query, Lte):
+    if isinstance(query, KQLLte):
         field = _render_literal(query.field)
         value = _render_literal(query.value)
         return f"{field} <= {value}"
 
-    if isinstance(query, Exist):
+    if isinstance(query, KQLExist):
         return f"{_render_literal(query.field)}: *"
 
-    if isinstance(query, Match):
+    if isinstance(query, KQLMatch):
         field = _render_literal(query.field)
         value = _render_value_condition_recursive(query.condition, in_not=True)
         return f"{field}: {value}"
 
-    if isinstance(query, MultiMatch):
+    if isinstance(query, KQLMultiMatch):
         return _render_value_condition_recursive(query.condition, in_not=True)
 
     raise NotImplementedError()  # pragma: no cover
 
 
-def render_kql(query: Query, /, *, optimize: bool = False) -> str:
+def render_kql(query: KQLQuery, /, *, optimize: bool = False) -> str:
     """Render the KQL query.
 
     :param query: Query to render.

@@ -29,11 +29,22 @@ For example, when executing the program with the following input:
 
 The output will resemble the following:
 
-.. code-block:: text
+.. code-block:: python
 
-    And(queries=(Match(field='http.status', condition=ValueMatch(value='500')),
-    Not(query=Match(field='http.request.method',
-    condition=ValueMatch(value='GET')))))
+    KQLAnd(
+        queries=(
+            KQLMatch(
+                field='http.status',
+                condition=KQLValueMatch(value='500'),
+            ),
+            KQLNot(
+                query=KQLMatch(
+                    field='http.request.method',
+                    condition=KQLValueMatch(value='GET'),
+                ),
+            ),
+        ),
+    )
 
 Parsing KQL queries as query DSN
 --------------------------------

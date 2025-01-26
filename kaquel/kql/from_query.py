@@ -50,21 +50,21 @@ from kaquel.query import (
 )
 
 from .lang import (
-    All as KQLAll,
-    And as KQLAnd,
-    Exist as KQLExist,
-    Gt as KQLGt,
-    Gte as KQLGte,
-    Lt as KQLLt,
-    Lte as KQLLte,
-    Match as KQLMatch,
-    MultiMatch as KQLMultiMatch,
-    Nested as KQLNested,
-    Not as KQLNot,
-    Or as KQLOr,
-    Query as KQLQuery,
-    ValueMatch as KQLValueMatch,
-    ValuePhraseMatch as KQLValuePhraseMatch,
+    KQLAll,
+    KQLAnd,
+    KQLExist,
+    KQLGt,
+    KQLGte,
+    KQLLt,
+    KQLLte,
+    KQLMatch,
+    KQLMultiMatch,
+    KQLNested,
+    KQLNot,
+    KQLOr,
+    KQLQuery,
+    KQLValueMatch,
+    KQLValuePhraseMatch,
 )
 
 

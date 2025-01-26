@@ -33,40 +33,50 @@ from __future__ import annotations
 import pytest
 
 from kaquel.kql.lang import (
-    And,
-    Match,
-    Not,
-    Or,
-    ValueAnd,
-    ValueMatch,
-    ValueNot,
-    ValueOr,
+    KQLAnd,
+    KQLMatch,
+    KQLNot,
+    KQLOr,
+    KQLValueAnd,
+    KQLValueMatch,
+    KQLValueNot,
+    KQLValueOr,
 )
 
 
 def test_value_condition_operators() -> None:
     """Check that native operators on value conditions work correctly."""
-    a = ValueMatch(value="a")
-    b = ValueMatch(value="b")
-    c = ValueMatch(value="c")
-    d = ValueMatch(value="d")
+    a = KQLValueMatch(value="a")
+    b = KQLValueMatch(value="b")
+    c = KQLValueMatch(value="c")
+    d = KQLValueMatch(value="d")
 
-    assert a & b == ValueAnd(conditions=(a, b))
-    assert ValueAnd(conditions=(a, b)) & c == ValueAnd(conditions=(a, b, c))
-    assert a & ValueAnd(conditions=(b, c)) == ValueAnd(conditions=(a, b, c))
-    assert ValueAnd(conditions=(a, b)) & ValueAnd(
+    assert a & b == KQLValueAnd(conditions=(a, b))
+    assert KQLValueAnd(conditions=(a, b)) & c == KQLValueAnd(
+        conditions=(a, b, c),
+    )
+    assert a & KQLValueAnd(conditions=(b, c)) == KQLValueAnd(
+        conditions=(a, b, c),
+    )
+    assert KQLValueAnd(conditions=(a, b)) & KQLValueAnd(
         conditions=(c, d),
-    ) == ValueAnd(conditions=(a, b, c, d))
+    ) == KQLValueAnd(conditions=(a, b, c, d))
 
-    assert a | b == ValueOr(conditions=(a, b))
-    assert ValueOr(conditions=(a, b)) | c == ValueOr(conditions=(a, b, c))
-    assert a | ValueOr(conditions=(b, c)) == ValueOr(conditions=(a, b, c))
-    assert ValueOr(conditions=(a, b)) | ValueOr(conditions=(c, d)) == ValueOr(
+    assert a | b == KQLValueOr(conditions=(a, b))
+    assert KQLValueOr(conditions=(a, b)) | c == KQLValueOr(
+        conditions=(a, b, c),
+    )
+    assert a | KQLValueOr(conditions=(b, c)) == KQLValueOr(
+        conditions=(a, b, c),
+    )
+    assert KQLValueOr(conditions=(a, b)) | KQLValueOr(
+        conditions=(c, d),
+    ) == KQLValueOr(
         conditions=(a, b, c, d),
     )
 
-    assert ~a == ValueNot(condition=a)
-    assert ~ValueNot(condition=a) == a
+    assert ~a == KQLValueNot(condition=a)
+    assert ~KQLValueNot(condition=a) == a
 
     with pytest.raises(TypeError):
         a & 5
@@ -77,25 +87,27 @@ def test_value_condition_operators() -> None:
 
 def test_query_operators() -> None:
     """Check that native operators on queries work correctly."""
-    a = Match(field="a", condition=ValueMatch(value="a"))
-    b = Match(field="b", condition=ValueMatch(value="b"))
-    c = Match(field="c", condition=ValueMatch(value="c"))
-    d = Match(field="d", condition=ValueMatch(value="d"))
+    a = KQLMatch(field="a", condition=KQLValueMatch(value="a"))
+    b = KQLMatch(field="b", condition=KQLValueMatch(value="b"))
+    c = KQLMatch(field="c", condition=KQLValueMatch(value="c"))
+    d = KQLMatch(field="d", condition=KQLValueMatch(value="d"))
 
-    assert a & b == And(queries=(a, b))
-    assert And(queries=(a, b)) & c == And(queries=(a, b, c))
-    assert a & And(queries=(b, c)) == And(queries=(a, b, c))
-    assert And(queries=(a, b)) & And(queries=(c, d)) == And(
+    assert a & b == KQLAnd(queries=(a, b))
+    assert KQLAnd(queries=(a, b)) & c == KQLAnd(queries=(a, b, c))
+    assert a & KQLAnd(queries=(b, c)) == KQLAnd(queries=(a, b, c))
+    assert KQLAnd(queries=(a, b)) & KQLAnd(queries=(c, d)) == KQLAnd(
         queries=(a, b, c, d),
     )
 
-    assert a | b == Or(queries=(a, b))
-    assert Or(queries=(a, b)) | c == Or(queries=(a, b, c))
-    assert a | Or(queries=(b, c)) == Or(queries=(a, b, c))
-    assert Or(queries=(a, b)) | Or(queries=(c, d)) == Or(queries=(a, b, c, d))
+    assert a | b == KQLOr(queries=(a, b))
+    assert KQLOr(queries=(a, b)) | c == KQLOr(queries=(a, b, c))
+    assert a | KQLOr(queries=(b, c)) == KQLOr(queries=(a, b, c))
+    assert KQLOr(queries=(a, b)) | KQLOr(queries=(c, d)) == KQLOr(
+        queries=(a, b, c, d),
+    )
 
-    assert ~a == Not(query=a)
-    assert ~Not(query=a) == a
+    assert ~a == KQLNot(query=a)
+    assert ~KQLNot(query=a) == a
 
     with pytest.raises(TypeError):
         a & 5

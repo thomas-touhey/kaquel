@@ -33,15 +33,15 @@ from __future__ import annotations
 import pytest
 
 from kaquel.kql.lang import (
-    And,
-    Match,
-    Or,
-    Query,
-    ValueAnd,
-    ValueMatch,
-    ValueNot,
-    ValueOr,
-    ValuePhraseMatch,
+    KQLAnd,
+    KQLMatch,
+    KQLOr,
+    KQLQuery,
+    KQLValueAnd,
+    KQLValueMatch,
+    KQLValueNot,
+    KQLValueOr,
+    KQLValuePhraseMatch,
 )
 from kaquel.kql.renderer import render_kql
 
@@ -49,60 +49,68 @@ from kaquel.kql.renderer import render_kql
 @pytest.mark.parametrize(
     "query,expected",
     (
-        (Match(field="a", condition=ValueMatch(value="b")), "a: b"),
+        (KQLMatch(field="a", condition=KQLValueMatch(value="b")), "a: b"),
         (
-            Or(queries=[Match(field="a", condition=ValueMatch(value="b"))]),
-            "a: b",
-        ),
-        (
-            And(queries=[Match(field="a", condition=ValueMatch(value="b"))]),
-            "a: b",
-        ),
-        (
-            Match(
-                field="a",
-                condition=ValueOr(conditions=[ValueMatch(value="b")]),
+            KQLOr(
+                queries=[
+                    KQLMatch(field="a", condition=KQLValueMatch(value="b")),
+                ],
             ),
             "a: b",
         ),
         (
-            Match(
-                field="a",
-                condition=ValueAnd(conditions=[ValueMatch(value="b")]),
+            KQLAnd(
+                queries=[
+                    KQLMatch(field="a", condition=KQLValueMatch(value="b")),
+                ],
             ),
             "a: b",
         ),
         (
-            Match(
+            KQLMatch(
                 field="a",
-                condition=ValueAnd(
+                condition=KQLValueOr(conditions=[KQLValueMatch(value="b")]),
+            ),
+            "a: b",
+        ),
+        (
+            KQLMatch(
+                field="a",
+                condition=KQLValueAnd(conditions=[KQLValueMatch(value="b")]),
+            ),
+            "a: b",
+        ),
+        (
+            KQLMatch(
+                field="a",
+                condition=KQLValueAnd(
                     conditions=[
-                        ValueMatch(value="b"),
-                        ValuePhraseMatch(value="c"),
+                        KQLValueMatch(value="b"),
+                        KQLValuePhraseMatch(value="c"),
                     ],
                 ),
             ),
             'a: (b and "c")',
         ),
         (
-            Match(
+            KQLMatch(
                 field="a",
-                condition=ValueOr(
+                condition=KQLValueOr(
                     conditions=[
-                        ValueMatch(value="b"),
-                        ValuePhraseMatch(value="c"),
+                        KQLValueMatch(value="b"),
+                        KQLValuePhraseMatch(value="c"),
                     ],
                 ),
             ),
             'a: (b or "c")',
         ),
         (
-            Match(
+            KQLMatch(
                 field="a",
-                condition=ValueOr(
+                condition=KQLValueOr(
                     conditions=[
-                        ValueMatch(value="b"),
-                        ValueNot(condition=ValuePhraseMatch(value="c")),
+                        KQLValueMatch(value="b"),
+                        KQLValueNot(condition=KQLValuePhraseMatch(value="c")),
                     ],
                 ),
             ),
@@ -110,6 +118,6 @@ from kaquel.kql.renderer import render_kql
         ),
     ),
 )
-def test_render(query: Query, expected: str) -> None:
+def test_render(query: KQLQuery, expected: str) -> None:
     """Check that rendering works correctly."""
     assert render_kql(query, optimize=False) == expected

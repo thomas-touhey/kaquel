@@ -33,16 +33,16 @@ from __future__ import annotations
 import pytest
 
 from kaquel.kql.lang import (
-    And as KQLAnd,
-    Match as KQLMatch,
-    MultiMatch as KQLMultiMatch,
-    Not as KQLNot,
-    Or as KQLOr,
-    Query as KQLQuery,
-    ValueAnd as KQLValueAnd,
-    ValueMatch as KQLValueMatch,
-    ValueNot as KQLValueNot,
-    ValueOr as KQLValueOr,
+    KQLAnd,
+    KQLMatch,
+    KQLMultiMatch,
+    KQLNot,
+    KQLOr,
+    KQLQuery,
+    KQLValueAnd,
+    KQLValueMatch,
+    KQLValueNot,
+    KQLValueOr,
 )
 from kaquel.kql.to_query import from_kql
 from kaquel.query import BooleanQuery, MatchQuery, MultiMatchQuery, Query

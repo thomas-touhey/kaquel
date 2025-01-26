@@ -45,25 +45,25 @@ from kaquel.errors import DecodeError, LeadingWildcardsForbidden
 from kaquel.utils import Runk
 
 from .lang import (
-    All,
-    And,
-    Exist,
-    Gt,
-    Gte,
-    Lt,
-    Lte,
-    Match,
-    MultiMatch,
-    Nested,
-    Not,
-    Or,
-    Query,
-    ValueAnd,
-    ValueCondition,
-    ValueMatch,
-    ValueNot,
-    ValueOr,
-    ValuePhraseMatch,
+    KQLAll,
+    KQLAnd,
+    KQLExist,
+    KQLGt,
+    KQLGte,
+    KQLLt,
+    KQLLte,
+    KQLMatch,
+    KQLMultiMatch,
+    KQLNested,
+    KQLNot,
+    KQLOr,
+    KQLQuery,
+    KQLValueAnd,
+    KQLValueCondition,
+    KQLValueMatch,
+    KQLValueNot,
+    KQLValueOr,
+    KQLValuePhraseMatch,
 )
 
 
@@ -319,7 +319,7 @@ def _parse_kql_and_value_list(
     /,
     *,
     options: _KQLParsingOptions,
-) -> tuple[ValueCondition, KQLToken]:
+) -> tuple[KQLValueCondition, KQLToken]:
     """Parse a KQL "and" value list.
 
     :param token_iter: Token iterator.
@@ -346,7 +346,7 @@ def _parse_kql_and_value_list(
 
             token = next(token_iter)
         elif token.type == KQLTokenType.QUOTED_LITERAL:
-            result = ValuePhraseMatch(value=token.value)
+            result = KQLValuePhraseMatch(value=token.value)
             token = next(token_iter)
         elif token.type == KQLTokenType.UNQUOTED_LITERAL:
             query_parts = [token.value or ""]
@@ -362,12 +362,12 @@ def _parse_kql_and_value_list(
             ):
                 raise LeadingWildcardsForbidden()
 
-            result = ValueMatch(value=" ".join(query_parts))
+            result = KQLValueMatch(value=" ".join(query_parts))
         else:
             raise UnexpectedKQLToken(token)
 
         if is_not:
-            result = ValueNot(condition=result)
+            result = KQLValueNot(condition=result)
 
         elements.append(result)
         if token.type != KQLTokenType.AND:
@@ -376,7 +376,7 @@ def _parse_kql_and_value_list(
     if len(elements) == 1:
         return elements[0], token
 
-    return ValueAnd(conditions=elements), token
+    return KQLValueAnd(conditions=elements), token
 
 
 def _parse_kql_or_value_list(
@@ -384,7 +384,7 @@ def _parse_kql_or_value_list(
     /,
     *,
     options: _KQLParsingOptions,
-) -> tuple[ValueCondition, KQLToken]:
+) -> tuple[KQLValueCondition, KQLToken]:
     """Parse a KQL "or" value list.
 
     :param token_iter: Token iterator.
@@ -406,7 +406,7 @@ def _parse_kql_or_value_list(
     if len(elements) == 1:
         return elements[0], token
 
-    return (ValueOr(conditions=elements), token)
+    return (KQLValueOr(conditions=elements), token)
 
 
 def _parse_kql_expression(
@@ -414,7 +414,7 @@ def _parse_kql_expression(
     /,
     *,
     options: _KQLParsingOptions,
-) -> tuple[Query, KQLToken]:
+) -> tuple[KQLQuery, KQLToken]:
     """Parse a KQL expression.
 
     :param token_iter: Lexer token iterator.
@@ -422,7 +422,7 @@ def _parse_kql_expression(
     :return: The obtained query, and the token after the obtained query.
     """
     token = next(token_iter)
-    result: Query
+    result: KQLQuery
 
     if token.type == KQLTokenType.NOT:
         is_not = True
@@ -441,7 +441,7 @@ def _parse_kql_expression(
             if comp_token.type != KQLTokenType.UNQUOTED_LITERAL:
                 raise UnexpectedKQLToken(token)
 
-            result = Gt(field=token.value or "", value=comp_token.value)
+            result = KQLGt(field=token.value or "", value=comp_token.value)
             token = next(token_iter)
         elif op_token.type == KQLTokenType.GTE:
             # Field range expression with "gte" range operator.
@@ -449,7 +449,7 @@ def _parse_kql_expression(
             if comp_token.type != KQLTokenType.UNQUOTED_LITERAL:
                 raise UnexpectedKQLToken(token)
 
-            result = Gte(field=token.value or "", value=comp_token.value)
+            result = KQLGte(field=token.value or "", value=comp_token.value)
             token = next(token_iter)
         elif op_token.type == KQLTokenType.LT:
             # Field range expression with "lt" range operator.
@@ -457,7 +457,7 @@ def _parse_kql_expression(
             if comp_token.type != KQLTokenType.UNQUOTED_LITERAL:
                 raise UnexpectedKQLToken(token)
 
-            result = Lt(field=token.value or "", value=comp_token.value)
+            result = KQLLt(field=token.value or "", value=comp_token.value)
             token = next(token_iter)
         elif op_token.type == KQLTokenType.LTE:
             # Field range expression with "lte" range operator.
@@ -465,7 +465,7 @@ def _parse_kql_expression(
             if comp_token.type != KQLTokenType.UNQUOTED_LITERAL:
                 raise UnexpectedKQLToken(token)
 
-            result = Lte(field=token.value or "", value=comp_token.value)
+            result = KQLLte(field=token.value or "", value=comp_token.value)
             token = next(token_iter)
         elif op_token.type == KQLTokenType.COLON:
             # Nested: "name: { ... }"
@@ -487,7 +487,7 @@ def _parse_kql_expression(
                 if end_token.type != KQLTokenType.RBRACE:
                     raise UnexpectedKQLToken(end_token)
 
-                result = Nested(path=token.value or "", query=result)
+                result = KQLNested(path=token.value or "", query=result)
                 token = next(token_iter)
             elif comp_token.type == KQLTokenType.LPAR:
                 field = token.value or ""
@@ -499,9 +499,9 @@ def _parse_kql_expression(
                     raise UnexpectedKQLToken(token)
 
                 if field == "*":
-                    result = MultiMatch(condition=condition)
+                    result = KQLMultiMatch(condition=condition)
                 else:
-                    result = Match(field=field, condition=condition)
+                    result = KQLMatch(field=field, condition=condition)
 
                 token = next(token_iter)
             elif comp_token.type == KQLTokenType.QUOTED_LITERAL:
@@ -509,13 +509,13 @@ def _parse_kql_expression(
                     # Even in a nested context, i.e. ``prefix`` being
                     # non-empty, Kibana interprets this as the field being
                     # a lone wildcard, so we want to do the same.
-                    result = MultiMatch(
-                        condition=ValuePhraseMatch(value=comp_token.value),
+                    result = KQLMultiMatch(
+                        condition=KQLValuePhraseMatch(value=comp_token.value),
                     )
                 else:
-                    result = Match(
+                    result = KQLMatch(
                         field=token.value or "",
-                        condition=ValuePhraseMatch(value=comp_token.value),
+                        condition=KQLValuePhraseMatch(value=comp_token.value),
                     )
 
                 token = next(token_iter)
@@ -538,24 +538,28 @@ def _parse_kql_expression(
                     # non-empty, Kibana interprets this as the field being
                     # a lone wildcard, so we want to do the same.
                     if "*" in query_parts:
-                        result = All()
+                        result = KQLAll()
                     else:
-                        result = MultiMatch(
-                            condition=ValueMatch(value=" ".join(query_parts)),
+                        result = KQLMultiMatch(
+                            condition=KQLValueMatch(
+                                value=" ".join(query_parts),
+                            ),
                         )
                 elif "*" in query_parts:
-                    result = Exist(field=token.value or "")
+                    result = KQLExist(field=token.value or "")
                 else:
-                    result = Match(
+                    result = KQLMatch(
                         field=token.value or "",
-                        condition=ValueMatch(value=" ".join(query_parts)),
+                        condition=KQLValueMatch(value=" ".join(query_parts)),
                     )
 
                 token = comp_token
             else:
                 raise UnexpectedKQLToken(comp_token)
         elif token.type == KQLTokenType.QUOTED_LITERAL:
-            result = MultiMatch(condition=ValuePhraseMatch(value=token.value))
+            result = KQLMultiMatch(
+                condition=KQLValuePhraseMatch(value=token.value),
+            )
             token = op_token
         else:
             query_parts = [token.value or ""]
@@ -574,8 +578,8 @@ def _parse_kql_expression(
             ):
                 raise LeadingWildcardsForbidden()
 
-            result = MultiMatch(
-                condition=ValueMatch(value=" ".join(query_parts)),
+            result = KQLMultiMatch(
+                condition=KQLValueMatch(value=" ".join(query_parts)),
             )
             token = op_token
     elif token.type == KQLTokenType.LPAR:
@@ -591,7 +595,7 @@ def _parse_kql_expression(
         raise UnexpectedKQLToken(token)
 
     if is_not:
-        result = Not(query=result)
+        result = KQLNot(query=result)
 
     return result, token
 
@@ -601,7 +605,7 @@ def _parse_kql_and_query(
     /,
     *,
     options: _KQLParsingOptions,
-) -> tuple[Query, KQLToken]:
+) -> tuple[KQLQuery, KQLToken]:
     """Parse an "and" query.
 
     :param token_iter: Lexer token iterator.
@@ -623,7 +627,7 @@ def _parse_kql_and_query(
     if len(elements) == 1:
         return elements[0], token
 
-    return And(queries=elements), token
+    return KQLAnd(queries=elements), token
 
 
 def _parse_kql_or_query(
@@ -631,7 +635,7 @@ def _parse_kql_or_query(
     /,
     *,
     options: _KQLParsingOptions,
-) -> tuple[Query, KQLToken]:
+) -> tuple[KQLQuery, KQLToken]:
     """Parse an "or" query.
 
     :param token_iter: Lexer token iterator.
@@ -653,7 +657,7 @@ def _parse_kql_or_query(
     if len(elements) == 1:
         return elements[0], token
 
-    return (Or(queries=elements), token)
+    return (KQLOr(queries=elements), token)
 
 
 def parse_kql(
@@ -661,7 +665,7 @@ def parse_kql(
     /,
     *,
     allow_leading_wildcards: bool = True,
-) -> Query:
+) -> KQLQuery:
     """Parse a KQL expression into an ElasticSearch query.
 
     :param kuery: KQL expression to parse.
@@ -679,7 +683,7 @@ def parse_kql(
     # Check for an empty query.
     first_token = next(token_iter)
     if first_token.type == KQLTokenType.END:
-        return All()
+        return KQLAll()
 
     # Requeue the first token.
     token_iter = chain(iter((first_token,)), token_iter)

@@ -46,106 +46,106 @@ from typing_extensions import TypeAlias
 # ---
 
 
-class BaseValueCondition(BaseModel):
+class BaseKQLValueCondition(BaseModel):
     """KQL value condition."""
 
     model_config = ConfigDict(extra="forbid")
     """Model configuration."""
 
-    def __and__(self, other: Any, /) -> ValueCondition:
-        if not isinstance(other, BaseValueCondition):
+    def __and__(self, other: Any, /) -> KQLValueCondition:
+        if not isinstance(other, BaseKQLValueCondition):
             raise TypeError()
 
-        if isinstance(self, ValueAnd):
-            if isinstance(other, ValueAnd):
-                return ValueAnd(
+        if isinstance(self, KQLValueAnd):
+            if isinstance(other, KQLValueAnd):
+                return KQLValueAnd(
                     conditions=(*self.conditions, *other.conditions),
                 )
 
-            return ValueAnd(conditions=(*self.conditions, other))
+            return KQLValueAnd(conditions=(*self.conditions, other))
 
-        if isinstance(other, ValueAnd):
-            return ValueAnd(conditions=(self, *other.conditions))
+        if isinstance(other, KQLValueAnd):
+            return KQLValueAnd(conditions=(self, *other.conditions))
 
-        return ValueAnd(conditions=(self, other))
+        return KQLValueAnd(conditions=(self, other))
 
-    def __or__(self, other: Any, /) -> Query:
-        if not isinstance(other, BaseValueCondition):
+    def __or__(self, other: Any, /) -> KQLValueCondition:
+        if not isinstance(other, BaseKQLValueCondition):
             raise TypeError()
 
-        if isinstance(self, ValueOr):
-            if isinstance(other, ValueOr):
-                return ValueOr(
+        if isinstance(self, KQLValueOr):
+            if isinstance(other, KQLValueOr):
+                return KQLValueOr(
                     conditions=(*self.conditions, *other.conditions),
                 )
 
-            return ValueOr(conditions=(*self.conditions, other))
+            return KQLValueOr(conditions=(*self.conditions, other))
 
-        if isinstance(other, ValueOr):
-            return ValueOr(conditions=(self, *other.conditions))
+        if isinstance(other, KQLValueOr):
+            return KQLValueOr(conditions=(self, *other.conditions))
 
-        return ValueOr(conditions=(self, other))
+        return KQLValueOr(conditions=(self, other))
 
-    def __invert__(self, /) -> Query:
-        if isinstance(self, ValueNot):
+    def __invert__(self, /) -> KQLQuery:
+        if isinstance(self, KQLValueNot):
             return self.condition
 
-        return ValueNot(condition=self)
+        return KQLValueNot(condition=self)
 
 
-class ValueAll(BaseValueCondition):
+class KQLValueAll(BaseKQLValueCondition):
     """All match for a value."""
 
 
-class ValueMatch(BaseValueCondition):
+class KQLValueMatch(BaseKQLValueCondition):
     """Match for a value."""
 
     value: str | int | float | date
     """Value."""
 
 
-class ValuePhraseMatch(BaseValueCondition):
+class KQLValuePhraseMatch(BaseKQLValueCondition):
     """Phrase match for a value."""
 
     value: str | int | float | date
     """Value."""
 
 
-class ValueAnd(BaseValueCondition):
+class KQLValueAnd(BaseKQLValueCondition):
     """AND operator on a value condition."""
 
-    conditions: Annotated[tuple[ValueCondition, ...], Len(min_length=1)]
+    conditions: Annotated[tuple[KQLValueCondition, ...], Len(min_length=1)]
     """Conditions."""
 
 
-class ValueOr(BaseValueCondition):
+class KQLValueOr(BaseKQLValueCondition):
     """OR operator on a value condition."""
 
-    conditions: Annotated[tuple[ValueCondition, ...], Len(min_length=1)]
+    conditions: Annotated[tuple[KQLValueCondition, ...], Len(min_length=1)]
     """Conditions."""
 
 
-class ValueNot(BaseValueCondition):
+class KQLValueNot(BaseKQLValueCondition):
     """NOT operator on a value condition."""
 
-    condition: ValueCondition
+    condition: KQLValueCondition
     """Condition."""
 
 
-ValueCondition: TypeAlias = Union[
-    ValueAll,
-    ValueMatch,
-    ValuePhraseMatch,
-    ValueAnd,
-    ValueOr,
-    ValueNot,
+KQLValueCondition: TypeAlias = Union[
+    KQLValueAll,
+    KQLValueMatch,
+    KQLValuePhraseMatch,
+    KQLValueAnd,
+    KQLValueOr,
+    KQLValueNot,
 ]
 """Value condition."""
 
 # HACK: Rebuild the models for circular dependencies.
-ValueAnd.model_rebuild()
-ValueOr.model_rebuild()
-ValueNot.model_rebuild()
+KQLValueAnd.model_rebuild()
+KQLValueOr.model_rebuild()
+KQLValueNot.model_rebuild()
 
 
 # ---
@@ -153,85 +153,85 @@ ValueNot.model_rebuild()
 # ---
 
 
-class BaseQuery(BaseModel):
+class BaseKQLQuery(BaseModel):
     """KQL query."""
 
     model_config = ConfigDict(extra="forbid")
     """Model configuration."""
 
-    def __and__(self, other: Any, /) -> Query:
-        if not isinstance(other, BaseQuery):
+    def __and__(self, other: Any, /) -> KQLQuery:
+        if not isinstance(other, BaseKQLQuery):
             raise TypeError()
 
-        if isinstance(self, And):
-            if isinstance(other, And):
-                return And(queries=(*self.queries, *other.queries))
+        if isinstance(self, KQLAnd):
+            if isinstance(other, KQLAnd):
+                return KQLAnd(queries=(*self.queries, *other.queries))
 
-            return And(queries=(*self.queries, other))
+            return KQLAnd(queries=(*self.queries, other))
 
-        if isinstance(other, And):
-            return And(queries=(self, *other.queries))
+        if isinstance(other, KQLAnd):
+            return KQLAnd(queries=(self, *other.queries))
 
-        return And(queries=(self, other))
+        return KQLAnd(queries=(self, other))
 
-    def __or__(self, other: Any, /) -> Query:
-        if not isinstance(other, BaseQuery):
+    def __or__(self, other: Any, /) -> KQLQuery:
+        if not isinstance(other, BaseKQLQuery):
             raise TypeError()
 
-        if isinstance(self, Or):
-            if isinstance(other, Or):
-                return Or(queries=(*self.queries, *other.queries))
+        if isinstance(self, KQLOr):
+            if isinstance(other, KQLOr):
+                return KQLOr(queries=(*self.queries, *other.queries))
 
-            return Or(queries=(*self.queries, other))
+            return KQLOr(queries=(*self.queries, other))
 
-        if isinstance(other, Or):
-            return Or(queries=(self, *other.queries))
+        if isinstance(other, KQLOr):
+            return KQLOr(queries=(self, *other.queries))
 
-        return Or(queries=(self, other))
+        return KQLOr(queries=(self, other))
 
-    def __invert__(self, /) -> Query:
-        if isinstance(self, Not):
+    def __invert__(self, /) -> KQLQuery:
+        if isinstance(self, KQLNot):
             return self.query
 
-        return Not(query=self)
+        return KQLNot(query=self)
 
 
-class All(BaseQuery):
+class KQLAll(BaseKQLQuery):
     """Match-all query."""
 
 
-class Nested(BaseQuery):
+class KQLNested(BaseKQLQuery):
     """Nested operator."""
 
     path: str
     """Path for the nested query."""
 
-    query: Query
+    query: KQLQuery
     """Subquery."""
 
 
-class Not(BaseQuery):
+class KQLNot(BaseKQLQuery):
     """NOT operator on a query."""
 
-    query: Query
+    query: KQLQuery
     """Subquery."""
 
 
-class And(BaseQuery):
+class KQLAnd(BaseKQLQuery):
     """AND operator between multiple queries."""
 
-    queries: Annotated[tuple[Query, ...], Len(min_length=1)]
+    queries: Annotated[tuple[KQLQuery, ...], Len(min_length=1)]
     """Subqueries."""
 
 
-class Or(BaseQuery):
+class KQLOr(BaseKQLQuery):
     """OR operator between multiple queries."""
 
-    queries: Annotated[tuple[Query, ...], Len(min_length=1)]
+    queries: Annotated[tuple[KQLQuery, ...], Len(min_length=1)]
     """Subqueries."""
 
 
-class Gt(BaseQuery):
+class KQLGt(BaseKQLQuery):
     """Greater than operator."""
 
     field: str
@@ -241,7 +241,7 @@ class Gt(BaseQuery):
     """Value the field must be greater than."""
 
 
-class Gte(BaseQuery):
+class KQLGte(BaseKQLQuery):
     """Greater than or equal operator."""
 
     field: str
@@ -251,7 +251,7 @@ class Gte(BaseQuery):
     """Value the field must be greater than or equal."""
 
 
-class Lt(BaseQuery):
+class KQLLt(BaseKQLQuery):
     """Less than operator."""
 
     field: str
@@ -261,7 +261,7 @@ class Lt(BaseQuery):
     """Value the field must be less than."""
 
 
-class Lte(BaseQuery):
+class KQLLte(BaseKQLQuery):
     """Less than or equal operator."""
 
     field: str
@@ -271,47 +271,47 @@ class Lte(BaseQuery):
     """Value the field must be less than or equal."""
 
 
-class Exist(BaseQuery):
+class KQLExist(BaseKQLQuery):
     """Exist operation."""
 
     field: str
     """Field to test the existence of."""
 
 
-class Match(BaseQuery):
+class KQLMatch(BaseKQLQuery):
     """Match operator between a field and its values."""
 
     field: str
     """Field name."""
 
-    condition: ValueCondition
+    condition: KQLValueCondition
     """Value condition."""
 
 
-class MultiMatch(BaseQuery):
+class KQLMultiMatch(BaseKQLQuery):
     """Match operators for all selected fields."""
 
-    condition: ValueCondition
+    condition: KQLValueCondition
     """Value condition."""
 
 
-Query: TypeAlias = Union[
-    All,
-    Nested,
-    And,
-    Or,
-    Not,
-    Gt,
-    Gte,
-    Lt,
-    Lte,
-    Exist,
-    Match,
-    MultiMatch,
+KQLQuery: TypeAlias = Union[
+    KQLAll,
+    KQLNested,
+    KQLAnd,
+    KQLOr,
+    KQLNot,
+    KQLGt,
+    KQLGte,
+    KQLLt,
+    KQLLte,
+    KQLExist,
+    KQLMatch,
+    KQLMultiMatch,
 ]
 """Query."""
 
 # HACK: Resolve circular dependencies.
-And.model_rebuild()
-Or.model_rebuild()
-Not.model_rebuild()
+KQLAnd.model_rebuild()
+KQLOr.model_rebuild()
+KQLNot.model_rebuild()
